@@ -1,0 +1,3612 @@
+﻿Build1=Default,com.omnicorp.lcarui.dialer
+File1=lcarmain.bal
+FileGroup1=Default Group
+Group=Default Group
+IconFile=
+Library1=abwifi
+Library10=encryption
+Library11=gestures
+Library12=http
+Library13=icostexttospeech
+Library14=ime
+Library15=mediacontroller
+Library16=net
+Library17=network
+Library18=phone
+Library19=randomaccessfile
+Library2=answercall
+Library20=reflection
+Library21=smsplus
+Library22=sql
+Library23=stringutils
+Library24=technis
+Library25=threading
+Library26=webviewextras
+Library27=javaobject
+Library28=okhttp
+Library3=audio
+Library4=betterdialogs
+Library5=broadcastreceiver
+Library6=byteconverter
+Library7=clipboard
+Library8=contentresolver
+Library9=core
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:maxSdkVersion="20"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>	)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~SetApplicationAttribute(android:theme, "@android:style/Theme.NoTitleBar")~\n~AddPermission(android.permission.WRITE_SMS)~\n~AddPermission(android.permission.READ_SMS)~\n~AddPermission(android.permission.MODIFY_AUDIO_SETTINGS)~\n~AddPermission("android.permission.CALL_PHONE")~\n~AddPermission("android.permission.WAKE_LOCK")~\n~AddPermission("android.permission.PROCESS_OUTGOING_CALLS")~\n~AddReplacement(<uses-permission android:name="android.permission.ACCESS_LOCATION_EXTRA_COMMANDS"/>, <!-- -->)~\n~AddReplacement(<uses-permission android:name="jp.co.c_lis.permission.CHANGE_LOCALE"/>, <!-- -->)~\n~AddReceiverText(stimer, ~\n~<intent-filter>~\n~    <action android:name="android.intent.action.NEW_OUTGOING_CALL" />~\n~	<action android:name="com.omnicorp.dialer" />~\n~	<action android:name="android.intent.action.HEADSET_PLUG" />~\n~	<action android:name="com.getpebble.action.SEND_NOTIFICATION" />~\n~</intent-filter>)
+Module1=LCAR
+Module10=HttpUtils2Service
+Module2=Trig
+Module3=STimer
+Module4=API
+Module5=LCARSeffects
+Module6=LCARSeffects2
+Module7=MailParser
+Module8=ContactsUtils
+Module9=HttpJob
+NumberOfFiles=1
+NumberOfLibraries=28
+NumberOfModules=10
+Version=9
+@EndOfDesignText@
+#Region Module Attributes
+	#FullScreen: True
+	#IncludeTitle: False
+	#ApplicationLabel: LCARS Dialer
+	#VersionCode: 82
+	#VersionName: 2.0.2
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+'http://www.basic4ppc.com/forum/additional-libraries-classes-official-updates/9990-solution-create-contact.html
+
+'Remove a permission
+'AddManifestText(<uses-feature android:name="android.hardware.camera" android:required="false"/>
+                '<uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>)
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules. as 
+	'Dim Platform As String: Platform = "Android" 		'Please change for what system this is on
+	'Dim Platform As String: Platform = "BlackBerry" 	'Please change for what system this is on
+	
+	'Type Sensor(Device As PhoneSensors, Name As String, SensorType As Int, ThreeValues As Boolean, IsPresent As Boolean,X As Int, Y As Int, Z As Int,  MaxValue As Float )
+	Dim SensorList As List, SensorEnabled As Boolean , Pi As Double,SelectedSetting As Double,lastURL As String ,LCARSpeed As Int,ServerIP As IPaddress ,InsuranceRemaining As Int
+	Dim  myWifi As ABWifi,waitingforwifi As Boolean,turnedwifion As Boolean ,CurrSensor As Int,GPSitems As Int,StarshipID As String ,SettingIndex As Int  'virtual sensors
+	Dim  NoDecimals As Boolean ,CurrentSensor2 As Int ,rACC(3) As Float, TMF As Int, FFTMode As Byte, ListColors(6) As Int 
+	Dim Hotspots As List ,WifiIsOn As Boolean,LoadingWifi As Boolean,WifiSearching As Boolean,WifiSearchCycles As Int,WifiSuccess As Int ,DOSITEM As Int, MenuSection As Int
+	Type Hotspot(Name As String,Mac As String, Checked As Boolean , isCurrent As Boolean)' ,  Data As ABWifiInfo)
+	
+	Dim Settings As Map, MicEnabled As Boolean ,micrunning As Boolean ,BackToQuit As Boolean ,cTimer As Int ,TimerCount As Int,needsreloading As Boolean ,AprilFools As Boolean ,AcceptOnlyNumbers As Boolean 
+    Dim Server As ServerSocket,SelectedSection As Int ,CurrentSection As Int,UMRsection As Int'-3=stardate, -2=settings, -1=mode select
+	Dim Socket1 As Socket,AStreams As AsyncStreams, GPSenabled As Boolean ,SocketConnected As Boolean ,Keytones As Boolean ,KeyToneIndex As Int, UMRURL As String ,UMRDOWNLOADING As Boolean ,HasShown As Boolean 
+	Dim MagicURL As String, MyURL As String , VR As VoiceRecognition,VRisInitialized As Boolean,IsVoiceCommand As Boolean ,IsLoading As Boolean  ' , TTS1 As TTS
+	'Dim BorgColor As Int, BorgPic As Int, BorgFont As Typeface, BorgSound As Int, BorgMode As Int, BorgFontSize As Int,needsborgswap As Boolean ,BorgElement As Int 'rgb 0,120,0
+	Dim OkudaMode As Int ,MouseStage As Int ,DefaultPort As Int,Screenshots As Boolean ,MultiCore As Boolean ,SkipIntro As Boolean  ,UID As String  ,Starshipname As String ,DOS As Int
+	Dim Password As String , CustomLevel As Int ,CMD() As String, RepeatMode As Boolean ,RAWmode As Boolean , LastVersion As String , WarpCoreRumble As Boolean ,IsAsking As Int , IsAskingID As Int
+	
+	Dim GameMode As Boolean , Buttons(15) As Byte , ButtonsChanged As Boolean ,CurrentSensor As Int,PlusID As String ,PageToken As String ,WebMode As Int,MaxSearchCycles As Int ,CurrentSettingsSection As Int 
+	
+	Dim BufferSize As Int, SampleRate As Int, ChannelConfig As Int, AudioFormat As Int, AudioSource As Int, NoChnls As Int,BitsPerSample As Int,DataSize As Int,  StartTime As Long, PasswordLocked As Boolean ,AudioFile As String ,Subtitles As StringBuilder 
+	
+	Dim ContactList As List ,VRQuestionID As Int, theSMSMessages As List ,LastContact As String ,LastUMRsection As Int,LastLoaded As Long 
+	Dim LastSMSID As Int, LastIsPerson As Boolean ,LoggingMode As Boolean ,Settings2 As Map 
+	
+	Dim Element18 As Int, List19 As Int ,List16 As Int, List27 As Int ,Element04 As Int ,Element87 As Int ,Element88 As Int ,WebWasVisible As Boolean ,LastExecuted As Long,DonotClose As Boolean 
+	Dim ElementAnswer As Int ,ElementTopBar As Int, ElementPicture As Int, ElementBigText As Int ,ElementSmlText As Int, CONTACTINFO As String  ,CurrentContact As Contact ,CurrentTime As Double
+	
+	Dim SpeakName As Boolean,TTSisReady As Boolean ,SpeakText As String,CurrentEmailAddress As String ,CurrentSubject As String ,CanClose As Boolean, IsOrientationLocked As Boolean,TTSisInitializing As Boolean  'TTS1 As TTS,
+	
+	Dim Proximity As PhoneSensors, CallsAnswered As Int , AutoTurnOff As Int = 60
+End Sub
+
+Sub Ask(QuestionID As Int, Title As String, tMessage As String, Default As String) As String 
+	Return betterMSGBOX(tMessage, Title, True, Default, "OK", "CANCEL", "")
+End Sub
+Sub MSGBOX1(tMessage As String, Title As String)
+	betterMSGBOX(tMessage,Title, False, "", "OK", "","")
+End Sub
+Sub MSGBOX3(tMessage As String, Title As String, Positive As String, Cancel As String, Negative As String) As Int 
+	Return betterMSGBOX(tMessage,Title, False, "", Positive, Cancel, Negative)
+End Sub
+
+Sub betterMSGBOX(tMessage As String, tTitle As String, IsTextInput As Boolean, Default As String, PositiveText As String, CancelText As String, NegativeText As String) As String 
+	Dim IP As BD_InputBoxParams, Title As Panel , BG2 As Canvas,ColorID As Int = LCAR.LCAR_RandomColor , Color As Int = LCAR.GetColor2(ColorID,False), temp As Int , ret As Int 
+	Dim Barwidth As Int = API.IIF(LCAR.SmallScreen, 50,100), Width As Int = Activity.Width * 0.9, ButtonWidth As Int, ButtonCount As Int ,Whitespace As Int=3, Params As BD_CustomDlgParams
+	If PositiveText.Length>0 Then ButtonCount = 1
+	If CancelText.Length>0 Then ButtonCount = ButtonCount + 1
+	If NegativeText.Length>0 Then ButtonCount = ButtonCount + 1
+	ButtonWidth = ((Width-Whitespace - ((Barwidth+LCAR.LCARCornerElbow2.Width+Whitespace)*2)) / ButtonCount) 
+	tMessage = API.TextWrap(BG, LCAR.LCARfont, LCAR.Fontsize, tMessage.ToUpperCase, Width - (Barwidth+Whitespace)*2)
+	ret=LCAR.ItemHeight +LCAR.LCARCornerElbow2.Height
+	
+	Dim Lines As Int = Regex.Split(CRLF, tMessage).Length, LineHeight As Int = LCAR.LCARfontheight+2, Height As Int = (ret*2) + (Lines * LineHeight), X As Int
+	Dim TextBoxHeight As Int =LCAR.LCARfontheight * 2
+	'Dim Positive As Object = CreateBetterButton(PositiveText, ColorID, ButtonWidth,ButtonHeight, True, CancelText.Length=0 AND NegativeText.Length=0, barwidth)
+	'Dim Cancel   As Object = CreateBetterButton(CancelText, ColorID, ButtonWidth,ButtonHeight, Positivetext.Length=0, NegativeText.Length=0, barwidth)
+	'Dim Negative As Object = CreateBetterButton(NegativeText, ColorID, ButtonWidth,ButtonHeight, Positivetext.Length=0 AND CancelText.Length, True, barwidth)
+	If IsTextInput Then Height = Height + TextBoxHeight
+		
+	IP.Initialize
+	Params.Initialize
+
+	Title.Initialize("")
+	Activity.AddView(Title, 0,0,Width, Height)
+	'Title.Width = Activity.Width * 0.75
+	'Title.Height = LCAR.ItemHeight + LCAR.LCARCornerElbow2.height
+	BG2.Initialize(Title)
+	
+	LCAR.DrawLCARelbow(BG2,  0,0, Barwidth+LCAR.LCARCornerElbow2.Width, Title.Height-ret+2, Barwidth, LCAR.ItemHeight, 0, ColorID, False, "", 0,  255,False)'top left
+	temp = Barwidth+LCAR.LCARCornerElbow2.Width
+	LCAR.CheckNumbersize(BG2)
+	LCAR.DrawText(BG2, Barwidth+Whitespace, ret, tMessage, ColorID, 1, False,255,0)
+	tTitle = API.LimitTextWidth(BG2,tTitle.ToUpperCase, LCAR.LCARfont, LCAR.NumberTextSize, Title.Width - (temp*2), "...")
+	temp = LCAR.DrawText2(BG2, temp+2, 0, LCAR.NumberTextSize, tTitle, Color, 0) + temp + 4
+		
+	X=Barwidth+LCAR.LCARCornerElbow2.Width+Whitespace
+	If IsTextInput Then
+		Dim Textbox As EditText 
+		Params.OpenKeyboard = True
+		Textbox.Initialize("")
+		Textbox.Text=Default.ToUpperCase
+		Textbox.Color=Colors.Black 
+		Textbox.SelectAll 
+		Textbox.Typeface=LCAR.LCARfont
+		Textbox.TextColor=Color 
+		Textbox.TextSize=LCAR.Fontsize 
+		API.SetMargin(Textbox,0)
+		Title.AddView(Textbox, X, Title.Height-LCAR.ItemHeight - TextBoxHeight - Whitespace, Width-X*2, TextBoxHeight)
+		LCAR.DrawRect(BG2, Textbox.Left, Textbox.Top, Textbox.Width, Textbox.Height, Color, Whitespace)
+	End If
+	If PositiveText.Length>0 Then 
+		Title.AddView(CreateBetterButton(DialogResponse.POSITIVE,PositiveText,ColorID, ButtonWidth, LCAR.ItemHeight-1), X,Title.Height-LCAR.ItemHeight, ButtonWidth, LCAR.ItemHeight-1)
+		X=X+ButtonWidth+Whitespace
+	End If
+	If CancelText.Length>0 Then 
+		Title.AddView(CreateBetterButton(DialogResponse.CANCEL,CancelText,ColorID, ButtonWidth, LCAR.ItemHeight-1), X,Title.Height-LCAR.ItemHeight, ButtonWidth, LCAR.ItemHeight-1)
+		X=X+ButtonWidth+Whitespace
+	End If
+	If NegativeText.Length>0 Then Title.AddView(CreateBetterButton(DialogResponse.NEGATIVE, NegativeText,ColorID, ButtonWidth, LCAR.ItemHeight), X,Title.Height-LCAR.ItemHeight, ButtonWidth, LCAR.ItemHeight)
+	
+	LCAR.DrawLCARelbow(BG2, 0, Title.Height-ret, Barwidth+LCAR.LCARCornerElbow2.Width, ret, Barwidth,LCAR.ItemHeight, 2, ColorID, False, "", 0, 255,False)'bottom left
+	LCAR.DrawLCARelbow(BG2, temp,0, Title.Width-temp, Title.Height-ret+2, Barwidth, LCAR.ItemHeight, 1, ColorID, False, "", 0, 255,False)'top right
+	LCAR.DrawLCARelbow(BG2, Title.Width-Barwidth-LCAR.LCARCornerElbow2.Width, Title.Height-ret, Barwidth+LCAR.LCARCornerElbow2.Width, ret, Barwidth,LCAR.ItemHeight, 3, ColorID, False, "", 0, 255,False)'bottom left
+	
+	
+	'LCAR.DrawRect(BG2, temp, 0, Title.Width-temp  ,  LCAR.ItemHeight , Color,0)
+	
+	
+	Activity.RemoveViewAt(Activity.NumberOfViews -1)
+	
+	Params.Background = Colors.Black
+	Params.TitleWidth =  Title.Width
+	Params.TitleHeight = 1
+	'Params.Title = Body
+	
+	Params.BodyHeight = Title.Height
+	Params.BodyWidth = Title.Width
+	Params.DialogBody = Title
+	
+	'BackPressed = False
+	ret = BD.CustomDialog(Params, "msgbox")
+	
+	'ret = BD.CustomDialog("", 0,0 , Title, Title.Width, Title.Height, 30, Colors.ARGB(192,0,0,0), "", "", "", IsTextInput, "")
+	If IsTextInput Then
+		If ret = DialogResponse.Positive Then Return Textbox.Text 
+		Return ""' IP.CompactAnswer 
+	End If
+	Return ret
+End Sub
+
+Sub msgbox_BackKeyPressed
+	'BackPressed = True
+	BD.CloseDialog(0)
+End Sub
+Sub BetterButton_Click
+	Dim Btn As Button = Sender
+	BD.CloseDialog(Btn.Tag)
+End Sub
+Sub CreateBetterButton(ID As Int, Text As String, ColorID As Int, Width As Int, Height As Int) As Button ', LeftSide As Boolean, RightSide As Boolean, BarWidth As Int) As Object 
+	Dim  BGs As StateListDrawable, gd1 As ColorDrawable , gd2 As ColorDrawable, btn As Button 
+	
+	btn.Initialize("BetterButton") 
+	btn.Tag=ID
+	btn.TextColor=Colors.Black 
+	btn.Text= Text.ToUpperCase
+	btn.Typeface = LCAR.LCARfont 
+	btn.TextSize = LCAR.Fontsize 
+	btn.Gravity = Gravity.CENTER
+	Activity.AddView(btn,  0,0, Width,Height)
+	
+	'BGs.Initialize
+	'BGs.AddState(BGs.State_Pressed, DrawMSGButton(Text,ColorID,Width,Height, LeftSide,RightSide, BarWidth, True))
+	'BGs.AddCatchAllState(DrawMSGButton(Text,ColorID,Width,Height, LeftSide,RightSide,BarWidth, False))
+	
+	BGs.Initialize
+	gd1.Initialize( LCAR.GetColor(ColorID, True, 255), 0)
+	BGs.AddState(BGs.State_Pressed, gd1)
+	gd2.Initialize( LCAR.GetColor(ColorID, False, 255), 0)
+	BGs.AddCatchAllState(gd2)
+	API.SetMargin(btn,0)
+	btn.Background  = BGs
+	Activity.RemoveViewAt(Activity.NumberOfViews -1)
+	Return btn 
+End Sub
+
+
+
+
+
+
+
+
+Sub Proximity_SensorChanged (Values() As Float)
+	Dim FaceIsClose As Boolean = (Values(0) = 0)'0 is close (screen off), 1 is far (screen on) 
+	Log("FaceIsClose: " & FaceIsClose & " old brightness: " & STimer.OldBrightness ) 
+	If STimer.ProximityEnabled Then
+		If FaceIsClose Then
+			API.SetScreenBrightness(1/255)
+			LCAR.LCAR_ScreenEnabled=False
+			API.GotoSleep
+		Else
+			API.SetScreenBrightness(STimer.OldBrightness)
+			LCAR.LCAR_ScreenEnabled=True
+			API.NewTimer("Main", 0, STimer.Infinite )
+		End If
+	Else
+		ProximityState(False,"Sensor changed")
+	End If
+	API.NewTimer("TurnOff",1,AutoTurnOff)
+End Sub
+Sub ProximityState(Enabled As Boolean, FromWhat As String) 
+	Log("ProximityState: " & Enabled & " " & FromWhat)
+	If Enabled Then
+		Proximity.Initialize(Proximity.TYPE_PROXIMITY)
+		Proximity.StartListening("Proximity")
+	Else
+		Proximity.StopListening 
+	End If
+End Sub	
+
+
+Sub ScreenBrightness(Value As Float)
+	Dim tempP As Phone 
+	'debug("MAINB: " & Value)
+	tempP.SetScreenBrightness(Value)
+End Sub
+
+
+
+Sub SetupVariables
+	LCARSpeed=10
+	MenuSection=-1
+	Pi = 3.14159265358979
+	SensorEnabled=False'if = true then randomizes sensor data
+	MyURL="http://sites.google.com/site/neotechni/Home/"
+
+	DefaultPort= 8080
+
+	CurrentSensor=-1
+	SelectedSection=-1
+
+	MaxSearchCycles=50
+	CustomLevel=5
+
+	LCAR.VolInc = 250
+	'LoadSettings (False)
+
+End Sub
+
+Sub GetVersion As String 
+	Dim PM As PackageManager 
+	Return PM.GetVersionName("com.omnicorp.lcarui.dialer") 
+End Sub
+
+Sub VRQuestion(QuestionID As Int) As Boolean
+	If QuestionID>0 Then
+		VRQuestionID=QuestionID
+		Return VRListen
+	End If
+End Sub
+Sub VRListen As Boolean 
+	If Not(VRisInitialized) Then 
+		VR.Initialize("VR")
+		VRisInitialized=True
+	End If
+	Select Case VRQuestionID
+		Case -1: VR.Prompt = "LISTENING..."
+		Case 1: VR.Prompt = "NAME THIS PHONE NUMBER"
+		Case 2: VR.Prompt = "TEXT " & CMD(1)
+		Case Else: VR.Prompt = "HELLO COMPUTER..."
+	End Select
+	If VR.IsSupported And API.IsConnected  Then 
+		VR.Listen
+		Return True
+	Else
+		LCAR.ToastMessage(BG, "VOICE RECOGNITION IS NOT AVAILABLE", 3)
+	End If
+	Return False
+End Sub
+Sub VR_Result (Success As Boolean, Texts As List)
+    If Success Then	VR_Handle(Texts.Get(0))
+	LCAR.ClearScreen(Null)
+End Sub
+
+
+Sub VR_Handle(Text As String)
+	Dim DidCommand As Boolean ,temp As Int 
+	If VRQuestionID <> 0 Then
+		Select Case VRQuestionID
+'			Case -1'Computer
+'				CMD=Regex.Split(" ", Text)
+'				Select Case CMD(0).ToLowerCase 
+'					Case "call"
+'						Text=API.right(Text, Text.Length - 5)
+'						'If Not(API.SendCall( GetPhoneNickname( "", Text))) Then LCAR.ToastMessage(BG, "'" & Text & "' NOT RECOGNIZED", 2)
+'					Case "text"
+'						CMD(1)=API.right(Text, Text.Length - 5).ToUpperCase 
+'						'CMD(0) = GetPhoneNickname( "", CMD(1))
+'						If CMD(0).Length =0 Then
+'							LCAR.ToastMessage(BG, "'" & CMD(0) & "' NOT RECOGNIZED", 2)
+'						Else	
+'							VRQuestion(2)
+'							Return
+'						End If
+'					
+'					Case Else
+'						LCAR.ToastMessage(BG, "'" & Text.ToUpperCase & "' NOT RECOGNIZED", 2)
+'				End Select
+'			
+'			Case 1'assign nickname to phone number
+'				'GetPhoneNickname(LCAR.LCAR_GetListItem(3, LCAR.LCAR_SelectedItem).Text, Text)
+'				LCAR.LCAR_GetListItem(3, LCAR.LCAR_SelectedItem).Side = Text.ToUpperCase 
+'			Case 2'send text message
+'				 API.SendTextMessage(CMD(0), Text)
+'				'LCAR.ToastMessage(BG, API.IIF(	Text.ToUpperCase & , " WAS",  " WAS NOT" ) &  " SENT TO " & CMD(1), 3)
+		End Select
+		VRQuestionID=0
+	Else
+		Select Case Text
+			Case "computer"
+				VRQuestionID=-1
+				VRListen
+			Case Else
+				If LCAR.IsKeyboardVisible(Null,-1,False) Then
+					LCAR.SelectText(Text)
+					LCAR.HideKeyboard(BG,10)
+					LCAR.PushEvent(LCAR.LCAR_OK, LCAR.KBCancelID+5,0,0,0,0,0,0)
+				Else If LCARSeffects.IsPromptVisible(Null) Then
+					If Text.EqualsIgnoreCase( LCAR.GetElement(LCARSeffects.PromptID+5).Text)  Then
+						LCAR.PushEvent(LCAR.LCAR_Button, LCARSeffects.PromptID+5, 0,0,0,0,0,LCAR.Event_Down)
+					Else If Text.EqualsIgnoreCase( LCAR.GetElement(LCARSeffects.PromptID+6).Text)  Then
+						LCAR.PushEvent(LCAR.LCAR_Button, LCARSeffects.PromptID+6, 0,0,0,0,0,LCAR.Event_Down)
+					Else If CurrentSection = 22 Then'personal log
+						Subtitles.Append( API.IIF( Subtitles.Length=0 ,"", CRLF) & (DateTime.Now-StartTime) & "=" & Text)
+						LCAR.ToastMessage(BG, Text,2)
+					End If
+				Else
+					Select Case Text
+						Case "mute", "on mute", "un mute"
+							LCAR.mute= Not(LCAR.Mute)
+
+						Case "exit"
+							ActivityFinish 
+						Case "back", "show mode select", "modi select", "mode select"
+							ShowModeSelect
+							
+						Case "search"
+							Activity_KeyPress(84)
+						Case "help"
+							ShowSection(CurrentSection, True)
+						Case "voice help"
+							BrowseMySite("voice")
+							
+						Case Else
+							CMD=Regex.Split(" ", Text)
+							If API.Containsword(CMD, "home") Then
+								ShowModeSelect
+							Else
+								Select Case CurrentSection
+										
+									Case 5, 15  'MEMORY ALPHA BROWSER,CAPTAINS LOG
+										DidCommand=True
+										Select Case Text
+											Case "top": MyWebViewExtras.pageup(webview1, True)
+											Case "bottom":  MyWebViewExtras.pageDown(webview1, True)
+											Case "page down", "who's down", "h down", "h town": MyWebViewExtras.pageDown(webview1, False)
+											Case "page up", "who's up", "h up":MyWebViewExtras.pageup(webview1, False)
+											Case "zoom in": MyWebViewExtras.zoomIn(webview1)
+											Case "zoom out": MyWebViewExtras.zoomOut(webview1)
+											Case "scroll down": MyWebViewExtras.flingScroll(webview1, 10, 0)
+											Case "scroll down slow": MyWebViewExtras.flingScroll(webview1, 1, 0)
+											Case "scroll up": MyWebViewExtras.flingScroll(webview1, -10, 0)
+											Case "scroll up slow": MyWebViewExtras.flingScroll(webview1, -1, 0)
+											Case Else									
+												Select Case CMD(0)
+													Case "clear"
+														HistoryList(0)
+													Case "load", "item", "open"
+														temp = API.KillAllExceptNumbers(Text)
+														If temp>0 Then	HistoryList(temp)
+													Case "history"
+														HistoryList(-1)
+													Case "search"
+														Text = Text.replace(" for " , " ").replace(" 4 " , " ")
+														Text = API.Right(Text, Text.length -7 )
+														'Searchfor(Text)
+													Case Else
+														DidCommand=False
+												End Select
+										End Select
+			
+
+								End Select
+								If Not(DidCommand) Then LCAR.ToastMessage(BG, Text & " NOT RECOGNIZED", 3)
+							End If
+					End Select
+				End If
+		End Select
+	End If
+	If RepeatMode Then VRListen
+End Sub
+
+
+
+Sub GetWasNegValue(WasNeg As Boolean, Value As Int )As Int
+	Return API.IIF(WasNeg, -Value,Value)
+End Sub
+Sub GetIndex(Command() As String , Index As Int, Default As String) As String 
+	If Index< Command.Length Then
+		Return Command(Index)
+	Else
+		Return Default
+	End If
+End Sub
+Sub TextContainsCommand(Windowtitle As String) As Boolean 
+	Dim temp As Int 
+	Windowtitle = Windowtitle.ToLowerCase 
+	For temp = 0 To CMD.Length -1
+		If CMD(temp).Length>0 Then
+			'Log(CMD(temp) & " | " & Windowtitle)
+			If Not(Windowtitle.Contains(CMD(temp))) Then Return False
+		End If
+	Next
+	Return True
+End Sub
+
+
+'Sub EnableMultiCore
+	'Dim temp As Thread 
+	'temp.Initialise("Thread")
+	'temp.Start("MultiCoreDrawing")
+	
+	'Dim Params(0) As Object
+	'temp.RunOnGuiThread("MultiCoreDrawing", Params)
+	'temp.Sleep(10)
+'End Sub
+'Sub MultiCoreDrawing
+'	DrawScreen(TimerMain.Interval)
+'End Sub
+
+
+
+Sub ResizeScreen
+	Dim temp As Int'Landscape As Boolean 
+	'Landscape=Activity.Width>Activity.Height 
+	'If LCARSeffects.IsFrameVisible Then ShowFrame(False,True)
+	If LCARSeffects.IsFrameVisible Then NeedsShowFrame=True
+	
+	If LCARSeffects.ispromptvisible(Null) Then
+		LCARSeffects.ReshowPrompt(BG)
+	Else
+		'MSGBOX1(CurrentSection,"CurrentSection")
+		Select Case CurrentSection
+		
+			Case -2'Settings, resize the lists
+				ResizeSetting(4)
+				MoveWebview
+			Case -1'main menu
+				CurrentSection=-999
+				ShowModeSelect
+			Case 2
+				needsreloading = True
+				webview1.Visible=True
+				MoveWebview
+				WebWasVisible=True
+			Case 1'answer call
+				ShowUFPlogo
+			Case 31
+				'If LCARSeffects.IsFrameVisible Then ShowFrame(False,True)
+				'If LCAR.IsKeyboardVisible(BG,-1,False) Then
+					'Select Case CurrentSection & "." & UMRsection
+					'	Case "31.5", "31.7":LCAR.ToggleMultiLine(True)
+					'	'Case Else: Log(CurrentSection & "." & UMRsection)
+					'End Select
+				'End If
+				Select Case UMRsection
+					Case 7
+						needsreloading = True
+						webview1.Visible=True
+						MoveWebview
+						WebWasVisible=True
+				End Select
+			
+		End Select
+	End If
+	LCAR.IsToastVisible(BG,True)
+End Sub
+Sub SmallScreenMode
+	Dim Left As Int=100, Height As Int=130, Top As Int =115 ,Mode As Float =1, temp As Int, temp2 As Int ', Element As LCARelement
+	If LCAR.SmallScreen Then
+		Mode=0.5
+		Left=50
+		Height=65
+		Top=102
+	Else If LCAR.CrazyRez>0 Then
+		Mode=LCAR.CrazyRez
+		Left= 100 * Mode
+		Top = LCAR.GetScaledPosition(3,False)' 182*Mode - LCAR.ListitemWhiteSpace 
+		Height=Height*Mode '(165-17)*Factor - LCAR.ListitemWhiteSpace 
+	End If
+
+
+
+	LCAR.SmallScreenMode(-1)
+	LCAR.GetElement(Element18).Align=69'text box
+	LCAR.MoveLCAR(LCAR.KBCancelID+5, 55,0,0,0,0,True,False,False)'text box
+	AlignLists
+End Sub
+
+Sub AlignLists
+	Dim temp As Int, Lists() As Int , Element As LCARelement 
+	Lists = Array As Int(List16,List27)' 5,10,11,12,13,16,18,20,23,24,25,26,27 ) 
+	LCAR.ClearScreen(BG)
+	For temp = 0 To Lists.Length -1
+		'If Not(LCARSeffects.MoveListY(Lists(temp) )) Then Return
+		LCARSeffects.MoveListY(Lists(temp) )
+	Next
+	'debug("REALIGNED LISTS")
+	
+	'resize textboxes
+	Lists = Array As Int(Element18) 
+	For temp = 0 To Lists.Length -1
+		If LCAR.LCARelements.Size>Lists(temp) Then
+			Element= LCAR.LCARelements.Get(Lists(temp) )
+			Element.Size.currY = LCAR.Fontsize 'LCAR.Fontfactor*0.01*LCAR.ItemHeight 
+		End If
+	Next
+	
+End Sub 
+
+
+
+Sub LoadSettings(Save As Boolean ) As Boolean 
+	Dim ret As Boolean
+	ret = API.LoadSettings(BG,Save)
+	If Not(Save) Then AlignLists
+	Return ret
+End Sub
+
+
+
+
+
+
+
+
+
+
+Sub webview1_OverrideUrl (URL As String) As Boolean
+	Dim tempstr As String 
+	tempstr=URL.ToLowerCase 
+	If tempstr.StartsWith("http://") Or tempstr.StartsWith("https://") Then
+		If Not( tempstr.EndsWith("png") Or tempstr.EndsWith("gif") Or tempstr.EndsWith("jpg") Or tempstr.EndsWith("jpeg") )Then
+			webview1.StopLoading
+			If URL.Contains("NEOTECHNI/HOME/") Then 
+				URL=URL.ToLowerCase.Replace("/home/", "/Home/").Replace("https://", "http://")
+			End If
+			API.DownloadURL(URL)
+		End If
+		'HttpUtils.Download("WebPage", URL)
+		'ShowFrame(True,True)
+		'webview1.loadurl(api.MakeHTML(html))
+		'webview1.Visible = True
+		'lcar.forceshow(18,True)
+		'lcar.LCAR_SetElementText( 18,api.Title, "")
+	Else If tempstr.StartsWith("file://") And Not( URL.EqualsIgnoreCase(API.ScrollTo(-1)))  Then
+	
+		If tempstr.Contains("#") Then
+			Return False 'MSGBOX1(tempstr, API.ScrollTo(-1))
+		End If
+		
+		webview1.StopLoading 
+		URL=API.right( URL,  URL.Length - 7 )
+		
+		If API.BaseHref.Length=0 Then API.BaseHref = "http://en.memory-alpha.org/"
+		If API.left(URL,1) = "/" Then
+			URL= API.GetBaseURL(API.basehref) & URL
+		Else If API.Left(URL,4 ).EqualsIgnoreCase( "www.") Then
+			URL = "http://" & URL
+		Else If Not( API.Left(URL,7 ).EqualsIgnoreCase( "http://"))  Then
+			URL=API.basehref & URL
+		End If
+
+		'"http://en.memory-alpha.org/"
+		'MSGBOX1(url & CRLF & api.basehref, "URL")
+		'url= api.BaseHref  & api.right( url,  url.Length - 8 )
+		API.DownloadURL(URL )
+	End If
+	lastURL=URL
+End Sub
+
+
+
+Sub toPercent(Value As Float, MaxValue As Float) As Int
+	'Return 50+ ((value/MaxValue)*50)
+	Return (Value/MaxValue)*100
+End Sub
+
+
+Sub SetSensorData(Name As String, Value As Int)As Boolean 
+End Sub
+Sub SetSensorData2(Index As String, X As Int, Y As Int,Z As Int, NegAlign As Boolean ) As Boolean 
+End Sub
+
+
+
+
+
+
+
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Dim BG As Canvas, TimerMain As Timer ,TimerBlink As Long,G As Gestures,NeedsShowFrame As Boolean,Record As Thread, Phone1 As PhoneEvents, TTS1 As ICOSTextToSpeech
+	'Dim myWIFI_Test As ToggleWifiData:myWIFI_Test.Initialize 
+	
+	Dim webview1 As WebView, MyWebViewExtras As WebViewExtras, BD As BetterDialogs
+	If webview1.IsInitialized  =False Then webview1.Initialize("webview1")
+	Phone1.Initialize("Phone")
+End Sub
+
+Sub ShowFrame(DoAnimation As Boolean, LeftBar As Boolean ) 
+	LCARSeffects.ShowFrame(BG, True, LeftBar, 3)
+End Sub
+
+
+
+Sub ParseHTML(HTML As String ) As Boolean 
+	Dim tempstr() As String ,temp As Int , Key As String, Value As String ,NeedsSaving As Boolean
+	tempstr=Regex.Split("<br />", HTML)
+	For temp = 0 To tempstr.Length-1
+		If tempstr(temp).Trim.Length>0 Then
+			Key = API.getSide( tempstr(temp).Trim, "=", True, False)
+			Value= API.getSide( tempstr(temp).Trim, "=", False, False)
+			Select Case Key.ToLowerCase 
+				Case "toast"
+					LCAR.ToastMessage(BG, Value,4)
+				Case "msgbox"
+					LCARSeffects.ShowPrompt(BG, 12, "ALERT", Value,  -1,"OK", "")
+			
+				Case Else
+					Settings.Put(Key,Value)
+					NeedsSaving=True
+			End Select
+		End If
+	Next
+	If NeedsSaving Then
+		File.WriteMap(File.DirInternal, "settings.ini", Settings)
+		LoadSettings(False)
+	End If
+	Return HTML.Length>0
+End Sub
+
+Sub JobDone (Job As HttpJob)
+	Dim HTML As String 
+	Select Case Job.JobName
+		Case "System"
+			If Job.Success Then
+				HTML = Job.GetString
+				If ParseHTML( API.GetBetween(HTML, "[" & StarshipID & "]", "[END]")) Then
+					ParseHTML( API.GetBetween(HTML, "[ALL]", "[END]"))
+				Else
+					ParseHTML( API.GetBetween(HTML, "[ELSE]", "[END]"))
+				End If
+			End If
+			
+		
+		Case "WebPage"
+			If Not(Job.Success) Then
+				SetElement18Text("WEB PAGE NOT AVAILABLE")
+				HTML = API.MakeErrrorPage(lastURL, Job.ErrorMessage)
+			Else
+				HTML = Job.GetString
+				HTML = API.ParseHTML(HTML , API.durl)
+				SetElement18Text(API.Title.Replace(" - ", CRLF))
+				Settings.Put("Title", API.Title)
+			End If
+			ShowFrame(True,True)
+			HTML=API.MakeHTML(HTML)
+			webview1.loadurl(HTML & API.aHREF )
+			AddHistoryItem(HTML, API.Title, -1    , "History", API.BaseHref)
+			webview1.Visible = True
+			MoveWebview
+	End Select
+	Job.Release
+End Sub
+
+
+
+Sub AddHistoryItem(URL As String, Title As String, ListID As Int, ListName As String, BaseHref As String )
+	Dim Count As Int 
+	Count = Settings.Getdefault(ListName & "Count", "0") +1
+	Settings.put(ListName & "Count", Count)
+	Settings.put(ListName & Count & "URL", URL)
+	Settings.put(ListName & Count & "Title", Title)
+	Settings.put(ListName & Count & "BaseHREF", BaseHref)
+	If ListID>-1 Then AddHistoryToList(URL, Title, ListID, Count)
+End Sub
+Sub AddHistoryToList(URL As String , Title As String, ListID As Int, Index As Int)
+	LCAR.LCAR_AddListItem(ListID, Title.ToUpperCase, LCAR.LCAR_Random, Index, URL, False, "", 0 , False, -1)
+End Sub
+Sub LoadHistory(ListID As Int, ListName As String, FirstItem As String  )As Int 
+	Dim temp As Int, Count As Int 
+	If FirstItem.Length>0 Then AddHistoryToList("", FirstItem, ListID, -1)
+	Count = Settings.Getdefault(ListName & "Count", "0")
+	For temp = 1 To Count
+		AddHistoryToList(Settings.Get(ListName & temp & "URL"), Settings.Get(ListName & temp & "Title"), ListID, temp)
+	Next
+	Return ListID
+End Sub
+Sub ClearHistory(ListID As Int, ListName As String, FirstItem As String)
+	Dim temp As Int, Count As Int ,Filename As String ,templist As List 
+	Count = Settings.Getdefault(ListName & "Count", "0")
+	For temp = 1 To Count
+		Filename=Settings.Get(ListName & temp & "URL")'"file://"
+		Filename=API.Right(Filename, Filename.Length - 7)
+		If Not( Filename.EqualsIgnoreCase(API.FileLoaded)) Then	File.Delete(API.GetDir(Filename), API.GetFile(Filename))
+		Settings.Remove(ListName & temp & "URL")
+		Settings.Remove(ListName & temp & "Title")
+		Settings.Remove(ListName & temp & "BaseHREF")
+	Next
+	Settings.put(ListName & "Count", "0")
+	LCAR.LCAR_ClearList(ListID, 0)
+	If FirstItem.Length>0 Then AddHistoryToList("", FirstItem, ListID, -1)
+	
+	Filename=File.Combine(LCAR.DirDefaultExternal, "HTML")
+	templist = File.ListFiles( Filename)
+	For temp = 0 To templist.Size-1
+		File.Delete(Filename, templist.Get(temp))
+	Next
+End Sub
+Sub GetBaseHREF(ListName As String, Index As Int) As String 
+	Return Settings.Get(ListName & Index & "BaseHREF")
+End Sub
+
+
+
+
+
+
+
+Sub PlayRandomBeep
+	Dim temp As Int 
+	If LCAR.LCAR_Beeps= 0 Then 
+		For temp = 1 To 99
+			If LCAR.FindSound("BEEP " & temp) = -1 Then
+				LCAR.LCAR_Beeps = temp-1
+				temp=1000
+			End If
+		Next
+	End If
+	
+	If Keytones AND LCAR.cVol>0 Then ' LCAR.PlaySoundAnyway(API.IIF(KeyToneIndex=1, Rnd(9,12),KeyToneIndex+7))
+		temp=KeyToneIndex'0=disabled, 1=random, 2=beep 1, 3=beep 2, 4=beep 3, 5=beep 4, 6=beep 5, 7=beep 6
+		If KeyToneIndex =1 Then temp = Rnd(2,LCAR.LCAR_Beeps+2)
+		LCAR.PlaySound(LCAR.FindSound("BEEP " & (temp-1)),False)
+		'LCAR.PlaySoundAnyway( LCAR.FindSound("BEEP " & (temp-1)) )
+	End If
+	LCAR.Rumble(1)
+End Sub
+
+
+Sub TranslateSection(Index As Int) As Int 
+	'18 becomes 7
+'	If Index < 7 Then
+'		Return Index
+'	Else If Index = 7 Then
+'		Return 18
+'	Else If Index <= 18 Then
+'		Return Index-1
+'	Else
+'		Return Index
+'	End If
+	If Index>-1 Then
+		Return LCAR.LCAR_GetListItem(0,Index).Tag 
+	Else
+		Return -1
+	End If
+End Sub
+Sub HandleGUInotCreated(Text As String)
+	'MSGBOX1("ERROR: Something attempted to access the GUI before it was created" & CRLF & "Please send "  & File.Combine(File.DirRootExternal,"error.txt") & " to Techni", Text)
+	LoggingMode=True
+	'Debug("Please email this file to technisbetas@gmail.com")
+	'Debug(Text & " was the source of the error")
+	Activity_Create(False)
+End Sub
+'Sub Debug(Text As String)
+	'If LoggingMode Then API.Debug(Text)
+'End Sub
+
+Sub OpenMarketplace(index As Int)
+	Dim tempintent As Intent , P As PhoneIntents
+	'https://play.google.com/store/apps/details?id=com.omnicorp.lcarui.dialer
+	Select Case index
+		Case DialogResponse.POSITIVE 'google play
+			tempintent.Initialize(tempintent.ACTION_VIEW, "market://details?id=com.omnicorp.lcarui.test")
+		Case DialogResponse.CANCEL'androidpit
+			tempintent = P.OpenBrowser("http://www.androidpit.com/en/android/market/apps/app/com.omnicorp.lcarui.test/LCARS-UI")
+	End Select
+	If tempintent.IsInitialized Then StartActivity(tempintent)
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Dim temp As Int,temp2 As Int ,tempstr As String' , Landscape As Boolean
+	BroadcastDisabler
+	'MSGBOX1(API.GetContactByPhoneNumber("9053150196").DisplayName,"DisplayName")
+	HandleClose 
+
+	LoggingMode=True
+	'Debug("Starting: Activity_Create(" & FirstTime & ")")
+	LCAR.MultiTouchEnabled=False
+	LCAR.BGisInit=False
+	TimerBlink=-1
+	INITBG
+
+	'Debug("Setting up variables")
+	LCAR.SetupTheVariables 
+	SetupVariables
+	LCAR.SetupLCARcolors(Activity) 
+	
+	'Debug("Test beginning")
+	'If  LCAR.MultiTouchEnabled  Then G.SetOnTouchListener(Activity, "Activity_GesturesTouch")
+	'Landscape=activity.Width>activity.Height 
+	'Msgbox ( 50%x, activity.Width)
+	If FirstTime Or Not(LCAR.GUIcreated) Then 
+		'Debug("GUI not created or FirstTime")
+		STimer.OldBrightness  = API.GetScreenBrightness
+		If STimer.OldBrightness=0 Then STimer.OldBrightness = -1
+		
+		If Not(LoadSettings (False)) Then
+			'Debug("Main app not detected")
+			OpenMarketplace(Msgbox2("THIS PROGRAM REQUIRES THE PURCHASE AND INSTALLATION OF THE LCARS UI VERSION 151 OR HIGHER. PLEASE PURCHASE IT" & CRLF & CRLF & "Dieses Programm erfordert den Kauf und die Installation des LCARS UI VERSION 103 oder höher. Bitte kaufen Sie es" & CRLF & CRLF & "Ce programme requiert les ACHAT ET INSTALLATION DE LA VERSION LCARS UI 103 OU PLUS. S'IL VOUS PLAÎT l'acheter", "LCARS UI NOT DETECTED","GOOGLE PLAY", "AndroidPIT", "", Null))
+			
+			ActivityFinish 
+		Else
+			'Debug("HTTP callback")
+			'HttpUtils.CallbackActivity="Main"
+			'HttpUtils.CallbackJobDoneSub = "JobDone"
+			'HttpUtils.CallbackUrlDoneSub = "UrlDone"
+		
+			'Debug("Add sounds")
+			'sound 0 (red alert toggle)
+			LCAR.AddSound("BEEP 1", "beep1.ogg", "")'sound 1 (beep 1)
+			LCAR.AddSound("BEEP 2", "beep2.ogg", "")'sound 2 (beep 2)
+			LCAR.AddSound("BEEP 3", "beep3.ogg", "")'sound 3 (beep 3)
+			LCAR.AddSound("BEEP 4", "beep4.ogg", "")'sound 4 (beep 4)
+			
+			LCAR.AddSound("ME", "recording.ogg", "")'sound 5 (my recording)
+			
+			LCAR.AddSound("BEEP 5", "beep5.ogg", "")'sound 6 (beep 5)
+			LCAR.AddSound("BEEP 6", "beep6.ogg", "")'sound 7 (beep 6)
+			LCAR.AddSound("BEEP 7", "beep7.ogg", "")'sound 8 (beep 7)
+			
+			LCAR.LoadPicture("ufp.png","")
+			
+			'Debug("Create GUI")
+			LCAR.SmallScreenMode(LCAR.LCAR_AddList("ModeSelect", 0,1,2,100,40,-1,-(Activity.Height -20), False, 3, LCAR.leftside,0,False,False,False,0))'list 0
+			List19 = LCAR.LCAR_AddList("SetSections", 0,1,1, 0, 256,103,   LCAR.ListItemsHeight(4)   , False, 0,0,0,False,False,False,0)'list 19
+			List27 = LCAR.LCAR_AddList("COMMS", 0,5, 5, 100 + LCAR.ChartSpace,200 ,-1, -1, False, 0,0,0,False,False,False,0) ',True)'list 27
+			LCAR.SmallScreenMode(LCAR.LCAR_AddList("Settings", 0, 1,1,  100 + LCAR.ChartSpace,200,  100 ,-1,  False,  3,LCAR.leftside,  0,  False,True,False ,0 ))'list 3 changed shownumber to true
+			LCAR.LCAR_Addlist("Options", 0, 1,1, 104, 200, 100,-1, False,3,0,0,False,False,False,0)'list 4
+			List16 = LoadHistory(LCAR.LCAR_AddList("History", 0, 1 ,1,  100 + LCAR.ChartSpace,200, -1 ,-1,  False,  3,LCAR.leftside,  0,  False,True,False ,0 ),"History", "CLEAR HISTORY")'list 16
+			
+			Element04 = LCAR.LCAR_AddLCAR("ModeOK", 0, 0,-40,-1,71,97,17, LCAR.LCAR_Orange, LCAR.LCAR_Elbow , "HELP","","",0,  False, 2, True, 2,255)'element 4
+			Element87 = LCAR.LCAR_AddLCAR("ModeOK2", 0, 0,0,-1,71,97,17, LCAR.LCAR_Orange, LCAR.LCAR_Elbow , "","","",0,  False, 2, True, 0,255)'element 87 (group 2) 
+			Element88 = LCAR.LCAR_AddLCAR("ModeOK3", 0, 100,-40,-1,LCAR.ItemHeight,LCAR.leftside,75, LCAR.LCAR_Orange, LCAR.LCAR_Button, "OK","HELP","",0,  False, 5, True, 0,255)'element 88
+			Element18 = LCAR.LCAR_AddLCAR("TopText", 0, 100, 0,  -1 , 20 ,  0,0,LCAR.lcar_orange, LCAR.LCAR_Textbox , "", "", "", 1, False,   3,True, 143, 0)'element 18 (group 4)
+			
+			LCAR.MakeKeyboard (0, 2) 'list 6, group 8, elements 21,22,23,24,25,26	
+			LCARSeffects.MakePrompt(0, 3)'Elements 41,42,43,44,45,46,47 (group 13)
+			LCARSeffects.MakeFrame(4,5)	'elements 6-17, (group 3 and 5)	
+					
+			' Element.LWidth,  Element.Align, Element.RWidth, Element.Opacity.Current, State, Element.Text, Element.ColorID, State, Element.Text=0, elementismoving)
+			ElementTopBar = LCAR.LCAR_AddLCAR("TOP", 0,0 ,0, -1, LCAR.itemheight,  LCAR.LCAR_LightBlue, LCAR.LCAR_Orange, LCAR.LCAR_Orange, LCAR.LCAR_TextButton, "LCARS ONLINE", "", "",  6, False, 0,True, LCAR.LCAR_LightBlue, 255)
+			ElementPicture= LCAR.LCAR_AddLCAR("UFP", 0, LCAR.ItemHeight*2, LCAR.ItemHeight*2,  100,100, 0 ,0,0, LCAR.LCAR_Picture, "","","",  6,True, 0,True,0,  0)'element 0
+			ElementBigText= LCAR.LCAR_AddLCAR("BigText", 0,  100, 200,  -1 , 100 ,  0,0,LCAR.lcar_orange, LCAR.LCAR_Textbox , "INCOMING TRANSMISSION", "", "",   6 , False,  12, True, 0,0)'element 19 (group 6)
+			ElementSmlText= LCAR.LCAR_AddLCAR("SmlText", 0,  100, 200,  -1 , 100 ,  0,0,LCAR.LCAR_LightBlue, LCAR.LCAR_Textbox , "TO:", "", "",   6 , False, 2, True, 0,0)'element 19 (group 6)
+			ElementAnswer = LCAR.LCAR_AddLCAR("Answer", 0,0, -LCAR.itemheight, -1,LCAR.ItemHeight,0,0, LCAR.Classic_Green, LCAR.LCAR_Answer, "YES","NO","", 6, False, LCAR.LCAR_Red,True, 0,255)
+			
+			
+			'Debug("Smallscreen test")
+			tempstr = Settings.GetDefault("SmallScreen", "")
+			If tempstr.EqualsIgnoreCase("true") OR LCAR.CrazyRez>0 Then SmallScreenMode
+			ShowModeSelect
+			StartServiceAt(STimer, DateTime.Now+1000,True)
+		End If
+	Else If LCAR.GUIcreated Then
+		'Debug("GUI already created, handling orientation change")
+		LCAR.SetupLCARcolors(Activity) 
+		If LCAR.GroupVisible(LCARSeffects.FrameGroup1) Then 
+			NeedsShowFrame = True
+			LCARSeffects.NeedsRedrawFrame = True
+			Log("FRAME IS VISIBLE")
+			'ShowFrame(False, lcar.LCAR_GetElement(17).Visible )
+		End If
+		
+		LCARSeffects.IsPromptVisible(Null)
+		ResizeScreen
+		
+		'lcar.IsKeyboardVisible(BG,10,False )
+		
+		
+	End If
+	
+	If LCAR.GUIcreated Then
+		'Debug("GUI already created, setting up timers, resizing frame and webview")
+		StartService(STimer)
+		
+		TimerMain.Initialize("Timermain", 10 )
+		TimerMain.Enabled=True
+		
+'		Try
+'			If LCAR.SmallScreen Then
+'				temp=50 + LCAR.ChartSpace
+'				Activity.AddView(webview1,  temp,100, Activity.Width-temp,Activity.Height-100)
+'			Else
+'				temp=100 + LCAR.ChartSpace
+'				Activity.AddView(webview1,  temp,195, Activity.Width-temp,Activity.Height-200)
+'			End If
+'		Catch
+'		End Try
+		If LCAR.SmallScreen Then
+			temp=50 + LCAR.ChartSpace
+			temp2=100
+		Else
+			temp=100 * LCAR.CrazyRez + LCAR.ChartSpace
+			temp2=LCAR.GetScaledPosition(3,False)
+		End If
+		Try	
+			Activity.AddView(webview1,  temp,temp2, Activity.Width-temp,Activity.Height-temp2)
+		Catch
+		End Try
+
+		webview1.Visible = WebWasVisible
+		webview1.Color=Colors.Black 
+		webview1.ZoomEnabled =False
+		If webview1.Visible Then MoveWebview
+		AlignLists
+	End If
+	LCAR.IsClean=False
+	SetShowWhenLocked(True)
+	
+	API.NewTimer("TurnOff",1,AutoTurnOff)
+End Sub
+
+Sub SetOrientation
+	Dim PH As Phone ,temp As Int 
+	temp = Settings.GetDefault("Orientation",0)
+	If temp = 0 Then
+		If IsOrientationLocked Then 
+			Log("Changing orientation to auto")
+			IsOrientationLocked=False
+			PH.SetScreenOrientation(-1)
+		End If
+	Else
+		IsOrientationLocked=True
+		Log("Changing orientation to " & API.IIF(temp=1, "Landscape", "Portrait"))
+		PH.SetScreenOrientation(temp-1)
+	End If
+End Sub
+
+'Sub MoveWebview
+'	Dim temp As Int
+'	If Not(webview1=Null)  Then
+'		If LCAR.SmallScreen Then
+'			temp=50 + LCAR.ChartSpace
+'			API.Move(webview1, Activity, temp,100, 0,0)
+'		Else
+'			temp=100 + LCAR.ChartSpace
+'			API.Move(webview1, Activity, temp,195, 0,0)
+'		End If
+'	End If
+'End Sub 
+
+Sub MoveWebview
+	Dim temp As Int
+	If Not(webview1=Null)  Then
+		If LCAR.SmallScreen Then
+			temp=50 + 2
+			API.Move(webview1, Activity, temp,100, 0,0)
+		Else
+			temp= (100 * GetScalemodeFlt)  + 2
+			API.Move(webview1, Activity, temp,LCAR.GetScaledPosition(3,False), 0,0)
+		End If
+	End If
+End Sub 
+
+Sub SetShowWhenLocked(State As Boolean)
+    Dim r As Reflector
+	Try
+	   	r.Target = r.GetActivity
+	    r.Target = r.RunMethod("getWindow")
+	    r.RunMethod2("addFlags", 6815872, "java.lang.int")
+	Catch
+	End Try
+End Sub
+
+
+
+
+
+Sub BoolToText(Value As Boolean ) As String
+	If Value Then Return "ENABLED" Else Return "DISABLED"
+End Sub
+Sub uCase(Text As String) As String 
+	Return Text.ToUpperCase 
+End Sub
+
+Sub Activity_Pause(UserClosed As Boolean ) 
+	If UserClosed Then
+	   ' Dim p As PhoneWakeState
+	    'p.ReleaseKeepAlive
+	   ' p.ReleasePartialLock
+		'debug("Wakelock released")
+		MailParser.SaveInboxMap 
+	End If
+	DonotClose = False
+	
+	API.GotoSleep
+	'End If
+	ProximityState(False, "Activity_Pause")
+	WebWasVisible=False
+	If Not(webview1=Null) Then WebWasVisible=webview1.Visible 
+	If WebWasVisible Then needsreloading=True
+	
+	TimerMain.Enabled=False
+	LCAR.ScreenIsOn = False
+	LoadSettings(True )
+	'TTS1.Release
+	LCAR.IsClean = False
+	CanClose=False
+	LCAR.stop
+	LCAR.HideToast 
+	InitTTS(False)
+
+	If API.DeleteSMScache(False) Then API.NewTimer("DELETECACHE",2, API.IIF(WebWasVisible, 360,5))
+	API.stoptimer(1, "Activity_Pause")
+End Sub
+
+Sub Activity_Resume
+	Dim WasSmallScreen As Boolean = LCAR.SmallScreen
+	SetOrientation
+	HandleClose
+	LCAR.HideToast 
+	API.StopTimer(2, "Activity_Resume")
+	
+	If File.LastModified(LCAR.DirDefaultExternal, "settings.ini") > LastLoaded Then		
+		LoadSettings(False)
+		
+		If LCAR.SmallScreen And Not(WasSmallScreen) Then SmallScreenMode'switched from regular to smallscreen
+		If Not(LCAR.SmallScreen) And WasSmallScreen Then 
+			MSGBOX1("YOU SWITCHED FROM SMALLSCREEN TO REGULAR MODE", "PLEASE RESTART THE PROGRAM")
+			ExitApplication'switched from smallscreen to regular
+		End If
+		
+		ShowModeSelect
+	End If
+	'Settings = API.LoadMap(LCAR.DirDefaultExternal, "settings.ini")'LastLoaded=DateTime.Now 
+	
+	InitTTS(True)
+	LCAR.ScreenIsOn = True
+	Phone1.Initialize("Phone")
+	'If HttpUtils.Complete = True Then JobDone(HttpUtils.Job)	
+	LCAR.BGisInit=False
+	TimerMain.Initialize("Timermain", 10 )
+	TimerMain.Enabled = True
+	'STimer.Increment=1000
+	LCAR.LCAR_ScreenEnabled=True
+	HandleCMD
+	SetShowWhenLocked(True)
+	'If NeedsCallsub.Length>0 Then CallSub(main, NeedsCallsub)
+	If STimer.CurrentPhoneState=1 Then API.NewTimer("Main", 0, STimer.Infinite )
+	
+	STimer.MissedCalls.Initialize 
+	API.UpdateNotification
+	API.NewTimer("TurnOff", 1,AutoTurnOff)
+End Sub
+
+Sub HandleClose
+	Log("Attempting to close=" & CanClose & " Donotclose=" & DonotClose & " API.IsInIDE: " & API.IsInIDE)
+	If CanClose And Not(API.IsInIDE) And Not(DonotClose) Then
+		Log("Should close")
+		CanClose=False
+		API.GotoSleep 
+		'Activity.sen .SendToBack 
+		ActivityFinish
+	End If
+End Sub
+
+
+
+Sub HandleCMD
+	Dim theCMD As Intent ,CMDtext As String , tempstr As String,Toast As String   
+	theCMD = Activity.GetStartingIntent()
+	If theCMD.HasExtra("CMD") AND theCMD.HasExtra("DAT") Then
+		CMDtext = theCMD.GetExtra("CMD")
+		tempstr = theCMD.GetExtra("DAT")
+		If tempstr <> LastExecuted Then
+			LastExecuted=tempstr
+			'Log(theCMD.ExtrasToString)
+			Select Case CMDtext
+				Case "PurgeInbox": 
+					MailParser.PurgeInOutBox(True,False)
+					Toast="INBOX PURGED"
+				Case "PurgeOutbox": 
+					MailParser.PurgeInOutBox(False,True)
+					Toast="OUTBOX PURGED"
+				Case "PurgeBothBoxes"
+					MailParser.PurgeInOutBox(True,True)
+					Toast="BOTH BOXES PURGED"
+					
+					
+				Case Else: Log("HandleCMD: '" & CMDtext & "' NOT HANDLED")
+			End Select
+			If Toast.Length>0 Then LCAR.ToastMessage(BG,Toast,3)
+		End If
+	End If
+End Sub
+
+Sub GetKeyState As String 
+	Dim temp As Int ,tempstr As String 
+	For temp = 0 To Buttons.Length -1
+		tempstr = tempstr & Buttons(temp)
+	Next
+	SetKeyState(0,0)
+	ButtonsChanged=False
+	Return tempstr
+End Sub
+Sub SetKeyState(KeyCode As Int,State As Byte) As Boolean 
+	'Dim GameMode As Boolean , Buttons(13) As Boolean , ButtonsChanged As Boolean 
+	Dim temp As Int '0 is not pushed, 1 is down, 2 is released
+	Select Case KeyCode
+		Case 84: Return True'search, exit gamemode
+		Case 0:'reset
+			For temp = 0 To Buttons.Length -1
+				If Buttons(temp) = 2 Then Buttons(temp)=0
+			Next
+			ButtonsChanged=True
+			Return False
+			
+		Case 19, KeyCodes.KEYCODE_W:  temp=0'  Buttons(0) = State'up
+		Case 22, KeyCodes.KEYCODE_D:  temp=1' Buttons(1) = State'right
+		Case 20, KeyCodes.KEYCODE_S:  temp=2' Buttons(2) = State'down
+		Case 211, KeyCodes.KEYCODE_A:  temp=3' Buttons(3) = State'left
+		
+		Case 23, KeyCodes.KEYCODE_ENTER, API.BUTTON_A:  temp=4' Buttons(4) = State'X
+		Case 4, KeyCodes.KEYCODE_L, API.BUTTON_B:   temp=5' Buttons(5) = State'back and O
+		Case 99, KeyCodes.KEYCODE_SPACE,API.BUTTON_C:  temp=6' Buttons(6) = State'Square
+		Case 100, KeyCodes.KEYCODE_DEL,API.BUTTON_X: temp=7' Buttons(7) = State'Triangle
+		
+		Case 108, KeyCodes.KEYCODE_F,API.BUTTON_START: temp=8'Buttons(8) = State'start
+		Case 109, KeyCodes.KEYCODE_G,API.BUTTON_SELECT: temp=9'Buttons(9) = State'select
+		Case 82, KeyCodes.KEYCODE_H,API.BUTTON_MODE:  temp=10'Buttons(10) = State'menu
+		
+		Case 102, KeyCodes.KEYCODE_Q,API.BUTTON_L1: temp=11'Buttons(11) = State'l shoulder
+		Case 103, KeyCodes.KEYCODE_P,API.BUTTON_R1: temp=12'Buttons(12) = State'r shoulder
+		
+		Case 24,API.BUTTON_L2:  temp=13'Buttons(13) = State'vol up
+		Case 25,API.BUTTON_R2:  temp=14'Buttons(14) = State'vol down
+		
+		Case Else:temp=-1
+	End Select
+	If temp>-1 Then
+		If Buttons(temp) <> State Then
+			Buttons(temp)=State
+			ButtonsChanged=True
+		End If
+	End If
+End Sub
+
+
+Sub Activity_KeyPress (KeyCode As Int) As Boolean 'return true if you want to consume the event
+	'MSGBOX1("Key pressed: " &  KeyCode, "KEYBOARD2" & LCAR.IsKeyboardVisible(Null,-1,False))
+	If KeyCode=79 OR KeyCode = KeyCodes.KEYCODE_HEADSETHOOK Then'headset button
+		Return False
+	Else If LCAR.GUIcreated Then
+		If GameMode Then
+			SetKeyState(KeyCode, 1)
+		Else If LCAR.IsKeyboardVisible(Null,-1,False) Then
+			If KeyCode=84 Then
+				VRListen
+			Else
+				'MSGBOX1("Key pressed: " &  KeyCode, "KEYBOARD")
+				If LCAR.HandleKeyboard(KeyCode) Then LCAR.ToastMessage(BG, "CAPS LOCK IS " & BoolToText(LCAR.KBCaps), 2)
+			End If
+		Else
+			Select Case KeyCode'0=up, 1=right, 2=down, 3=left, -1=X, 4=[], 5=Tri, 6=Ls, 7=Rs, 8=Start
+				Case 19, KeyCodes.KEYCODE_W: 					LCAR.PushEvent(LCAR.LCAR_HardwareBTN, 0       ,0,0,0,0,0, LCAR.Event_Down)'up
+				Case 22, KeyCodes.KEYCODE_D: 					LCAR.PushEvent(LCAR.LCAR_HardwareBTN, 1       ,0,0,0,0,0, LCAR.Event_Down)'right
+				Case 20, KeyCodes.KEYCODE_S: 					LCAR.PushEvent(LCAR.LCAR_HardwareBTN, 2       ,0,0,0,0,0, LCAR.Event_Down)'down
+				Case 21, KeyCodes.KEYCODE_A: 					LCAR.PushEvent(LCAR.LCAR_HardwareBTN, 3       ,0,0,0,0,0, LCAR.Event_Down)'left
+				Case 23, KeyCodes.KEYCODE_ENTER, API.BUTTON_A: 	LCAR.PushEvent(LCAR.LCAR_HardwareBTN,-1       ,0,0,0,0,0, LCAR.Event_Down)'center/cross/X
+				
+				Case 99, KeyCodes.KEYCODE_SPACE: 				LCAR.PushEvent(LCAR.LCAR_HardwareBTN, 4       ,0,0,0,0,0, LCAR.Event_Down)'square
+				Case 100, KeyCodes.KEYCODE_DEL: 				LCAR.PushEvent(LCAR.LCAR_HardwareBTN, 5       ,0,0,0,0,0, LCAR.Event_Down)'triangle
+				Case 102, KeyCodes.KEYCODE_Q,API.BUTTON_L1: 	LCAR.PushEvent(LCAR.LCAR_HardwareBTN, 6       ,0,0,0,0,0, LCAR.Event_Down)'l shoulder
+				Case 103, KeyCodes.KEYCODE_P,API.BUTTON_R1: 	LCAR.PushEvent(LCAR.LCAR_HardwareBTN, 7       ,0,0,0,0,0, LCAR.Event_Down)'r shoulder
+				Case 108, KeyCodes.KEYCODE_F,API.BUTTON_START: 	LCAR.PushEvent(LCAR.LCAR_HardwareBTN, 8       ,0,0,0,0,0, LCAR.Event_Down)'start
+				
+				'Case 109, API.BUTTON_SELECT: 	TakeScreenshot' lcar.PushEvent(lcar.LCAR_HardwareBTN, 9       ,0,0,0,0,0, lcar.Event_Down)'select
+				Case 82:	'ShowSettings(True,False) 'settings
+					ReturnToApp("COMMSSettings")
+				
+				Case 4, API.BUTTON_C: 	'back and O
+					If (STimer.CurrentPhoneState=0 OR CurrentSection=1) AND Not(API.IsInIDE) Then
+						API.GotoSleep
+						Return False'ShowModeSelect'back and O
+					Else
+						ShowSection(1,False)
+					End If
+					
+				Case 24: Return LCAR.SetVol(True)' ToastMessageShow("VOLUME: " &  LCAR.SetVol(True) & "%",False)' LCAR.Mute = False'vol up
+					
+				Case 25: Return LCAR.SetVol(False)' ToastMessageShow("VOLUME: " &  LCAR.SetVol(False) & "%",False)'vol down
+					'LCAR.Mute=True
+					'LCAR.Stop 
+					
+				Case API.BUTTON_B
+					Activity_KeyPress( API.IIF(CurrentSection = 17, 103,84))
+
+				Case 84'search
+					If LCAR.IsNumboardVisible Then
+						VRListen
+					Else '
+						Select Case CurrentSection
+							Case 0, 12, 13'GNDN: intro, clock,analysis
+							
+							Case 5'memory alpha
+								If LCAR.RedAlert Then
+									ShowModeSelect
+								Else
+									'lcar.ShowKeyboard(BG,10)
+									If LCAR.ElementMoving OR LCAR.IsListVisible(16) Then
+										LCAR.PlaySound(8, False)
+									Else
+										LCAR.ToastMessage(BG, "ANYTHING WITH A PERIOD IN IT WILL BE TREATED AS A URL", 4)
+										LCAR.PlaySound(6, False)
+										LCAR.IsKeyboardVisible(BG,10,True) 
+									End If
+								End If
+
+							'Case 31'Communicator						
+							'	HandleCOMMS(-1,-2)
+								
+							Case Else
+								HandleCOMMS(-1,-2)
+								'If WallpaperService.AllowPreview Then
+								'	ShowSection(23,False)
+								'Else
+									'LCAR.SetRedAlert(Not(LCAR.RedAlert))
+								'End If
+						End Select
+					End If
+				Case Else
+					Log("PRESS: "& KeyCode )
+			End Select
+		End If
+		Return True
+	Else
+		HandleGUInotCreated("Activity_KeyPress")
+	End If
+End Sub
+
+
+Sub Activity_Touch (Action As Int, X As Float, Y As Float)
+	'for when multitouch isnt working 
+	API.NewTimer("TurnOff",1,AutoTurnOff)
+	If Not(LCAR.MultiTouchEnabled )  Then Activity_GesturesTouch(Activity, 0,Action,X,Y)
+End Sub
+
+Sub Activity_GesturesTouch(View As Object, PointerID As Int, Action As Int, X As Float, Y As Float) As Boolean
+	'debug("ID: " & PointerID & " ACTION: " & action)
+	If LCAR.GUIcreated Then
+		If LCAR.GesturesTouch(0, G, PointerID, Action, X, Y) Then HandleEvents(0)
+	
+	'lcar.LCAR_AddListItem(0,  "Clicked: " & PointerID &  " - "   ,   lcar.LCAR_RandomColor,   PointerID , "", False,  X & "," & y,  0,False)
+		Return True
+	End If
+End Sub
+
+'Sub SetElement18Text(Text As String) 
+'	Dim Width As Int 
+'	LCAR.forceshow(Element18,True)
+'	Width= Min(LCAR.ScaleHeight,LCAR.Scalewidth)
+'	If LCARSeffects.IsFrameVisible Then Width=Width - API.IIF(LCAR.SmallScreen,53,103)
+'	LCAR.LCAR_SetElementText( Element18, API.TextWrap(BG, LCAR.LCARfont, LCAR.Fontsize,  Text.ToUpperCase,  Width) , "")
+'	'LCAR.LCAR_SetElementText( 18, Text, "")
+'End Sub
+Sub SetElement18Text(Text As String) 
+	Dim Width As Int, Width2 As Int = 103, Element As LCARelement 
+	LCAR.forceshow(Element18,True)
+	Width= Min(LCAR.ScaleHeight,LCAR.Scalewidth)
+	If LCARSeffects.IsFrameVisible Then
+		If LCAR.SmallScreen Then 
+			Width2=53 
+		Else If LCAR.CrazyRez >0 Then 
+			Width2=100*LCAR.CrazyRez + LCAR.ListitemWhiteSpace 
+		End If
+		Width=Width - Width2' API.IIF(LCAR.SmallScreen,53,103)
+	End If
+	Element= LCAR.LCARelements.Get(Element18)
+	Element.LOC.currX=-Width
+	Element.Align = LCAR.GetScaledPosition(0,False)
+	Element.Text=API.TextWrap(BG, LCAR.LCARfont, LCAR.Fontsize,  Text.ToUpperCase,  Width)
+	Element.IsClean=False
+	
+	'LCAR.LCAR_SetElementText( 18, API.TextWrap(BG, LCAR.LCARfont, LCAR.Fontsize,  Text.ToUpperCase,  Width) , "")
+End Sub
+
+
+Sub GetHeightOfHelp(Top As Int, SpaceLeftUnder As Int) As Int 
+	Dim NumOfListitems As Int ,Height As Int 
+	Height = LCAR.ScaleHeight - Top - SpaceLeftUnder
+	NumOfListitems = Floor(Height / LCAR.ListItemsHeight(1))
+	Height = NumOfListitems*LCAR.ListItemsHeight(1)
+	SpaceLeftUnder = LCAR.ScaleHeight - Top - Height + LCAR.ListItemsHeight(2)
+	Return SpaceLeftUnder
+End Sub
+
+Sub ShowModeSelect As Boolean 
+	Dim temp As Int,temp2 As Int,temp3 As Int, tempstr As String ,DontRandom As Boolean',Smaller As Boolean ' ,Element As LCARelement 
+	HandleClose
+	
+	If API.APIlevel>=API.BlockLollipop AND API.BlockLollipop>0 AND Not(HasShown) Then
+		Log("FIRST TIME")
+		ShowPrompt("WARNING", "GOOGLE HAS BLOCKED THE DIALER ON LOLLIPOP FROM ANSWERING CALLS AND LATER VERSIONS OF ANDROID", -1, "DAMN", "")
+		HasShown = True
+		Return False
+	End If
+	
+	LCAR.DrawFPS=False
+	LCAR.MinTimer=0
+	LCAR.TimerPeriod=0
+	LCAR.StopRumble
+	WebMode=0
+	STimer.Increment=1000
+	LCAR.ToastAlign= False
+	LCAR.HideToast
+	LCAR.SymbolsEnabled=False 
+	LCAR.BypassHardwareKB=False
+	LCAR.ClearScreen(BG)
+	CallSub(STimer,"ForceAwake")
+		
+'	If Activity.Width<480 OR Activity.Height< 480 Then
+'		tempstr= Settings.GetDefault("SmallScreen", "")
+'		If tempstr.Length =0 Then
+'			LCARSeffects.ShowPrompt(BG, 12, "SMALL SCREEN", "Use small screen mode?", 0,"NO", "YES")
+'			Return False
+'		Else If tempstr.EqualsIgnoreCase("true") Then
+'			SmallScreenMode
+'		End If
+'	End If
+	
+	Select Case CurrentSection
+		Case -999:DontRandom=LCAR.LessRandom 
+		Case -1: If BackToQuit AND Not(API.IsInIDE) Then ActivityFinish Else DontRandom=LCAR.LessRandom 
+	End Select
+		
+	'lcar.LCAR_AddLCAR("ModeOK",  0,        10,     -40,-20,lcar.ItemHeight,20,0, lcar.LCAR_Orange, lcar.LCAR_Button, "OK","","",1,  False, 5,True, 0,255)'element 4
+	'lcar.ForceElementData(4, 10, 50%y+40, 0,0, 100%x , lcar.Fontsize,0,0,255,255,True,False)
+	
+	'If HandleRick Then Return
+	
+	LCARSeffects.frameoffset=0
+	webview1.Visible = False
+	SensorEnabled=False
+	CurrentSection=-1
+	LCAR.Stop
+	GPSenabled=False
+
+	
+	'LCAR.LCAR_HideAll(BG,False)
+	'LCAR.ForceHide(element85 )
+	LCAR.ForceHideAll(BG)
+	
+		temp=LCAR.ItemHeight+3 'TOP            74'71+3 'LCAR.TextHeight(BG, "TESTING")+3
+		temp2=-25' API.IIF(Smaller, -LCAR.ItemHeight-3, -25)'Remaining space after list
+		temp3=GetHeightOfHelp(temp,temp2)'Height of HELP
+		
+		
+	'If LastVersion.EqualsIgnoreCase(GetVersion) Then
+		'LCAR.ResizeList(List19, 100,LCAR.ListItemsHeight(6) ,0,0,temp,True)'API.IIF(LCAR.SmallScreen, 50,100)	-LCAR.ItemHeight -3
+		'If Not(DontRandom) Then
+		'	LCAR.LCAR_ClearList(List19,0)
+		'	LCAR.LCAR_AddListItems (List19, LCAR.LCAR_Random, 0, Array As String("ALL", "SNSR", "FNCT", "GAME", "GNDN", "SYS" ))
+		'End If
+		If LCAR.GetList(0).ListItems.Size=0 OR LCAR.LessRandom Then SeedSectionList(-1)
+		'	SeedSectionList(0)
+		'Else If LCAR.LessRandom Then
+		'	SeedSectionList(MenuSection)
+		'End If
+		
+		'LCAR.LCAR_HideElement(BG,19, True,True,False)
+		LCAR.ResizeElement(Element87, 0,0,-1,LCAR.ItemHeight, 0,0,-1,LCAR.ItemHeight)
+		
+		If (LCAR.ScaleHeight-temp -temp3) > LCAR.ItemHeight Then
+			LCAR.LCAR_SetElementText(LCARSeffects.FrameElement+11, "OK", "")
+			LCAR.ForceElementData(LCARSeffects.FrameElement+11, 0, temp, 0,0, 97, -temp3  -3          , 0,0,0,255,True,True) 
+			'LCAR.ForceElementData(LCARSeffects.FrameElement+6, 0, 0, 0,0,      0, LCAR.ItemHeight           , 0,0,0,255,True,True) 
+			'LCAR.ForceElementData(4,  0,-LCAR.ItemHeight*2, 0,0, -1 ,LCAR.ItemHeight*2, 0,0,0,255,False,False)
+			LCAR.ForceElementData(Element04,  0,-temp3, 0,0, -1 ,temp3, 0,0,0,255,False,False)
+			LCAR.ForceShow(Element04,True)
+		Else
+			'Smaller=True
+			temp2=-LCAR.ItemHeight-3
+			LCAR.LCAR_SetElementText(LCARSeffects.FrameElement+11, "", "")
+			LCAR.ForceElementData(LCARSeffects.FrameElement+11, 0, temp+ LCAR.ListItemsHeight(6), 0,0, 97, -1          , 0,0,0,255,True,True) 
+			
+			LCAR.ForceElementData(Element88, 100, -LCAR.ItemHeight, 0,0, -1,LCAR.ItemHeight, 0,0, 0,255,True,True)
+			LCAR.ForceShow(Element88,True)
+		End If
+		
+		LCAR.ForceShow(Element87,True)
+		LCAR.ForceShow(LCARSeffects.FrameElement+11,True)
+
+		
+		'SetElement18Text( "THE CAPTAIN'S LOG (FNCT) SHOWS MY PROGRESS")
+		LCAR.LCAR_SetElementText(LCARSeffects.FrameElement, "", "")
+		'LCAR.LCAR_SetElementText(element82, "", "")
+		
+		'temp=LCAR.Stage 
+		'If temp=7 OR temp=8 Then lcar.LCAR_HideElement(bg,4,False,True,false)
+		LCAR.RandomizeColors(0)
+		'LCAR.LCAR_GetListItem(0,16).ColorID=LCAR.LCAR_Red 
+		
+		LCAR.resizeList(0, -1, 0,-1,API.IIF(LCAR.LessRandom, 130 , 100),temp, True)
+		LCAR.Stage=8
+		'LCAR.SetRedAlert(False)
+		
+		'lcar.HideGroup(1,  True, False)
+		LCAR.LCAR_HideElement(BG,0,True,True,False)
+		'LCAR.resizeList(0, -1, -LCAR.itemheight-10,-1,0,0,False)
+		LCAR.resizeList(0, -1,temp2,-1,0,0,False)
+		'lcar.LCAR_HideElement(bg,4,False,True)
+		
+
+		'Element= lcar.LCARelements.Get(4)
+		'element.Opacity.Current=0
+		'element.Opacity.Desired=255
+		'element.Visible = True
+		'lcar.LCARelements.Set(4,element)
+		LoadSettings(True)
+		'If Not(HasShown) Then
+			'ToastMessageShow("Please send issues to technisbetas@gmail.com, putting them in the reviews doesn't help me find/fix them", True)
+		'	LCAR.ToastMessage(BG, "Please send issues to technisbetas@gmail.com, putting them in the reviews doesn't help me find/fix them", 5)
+			'If DOS>-1 Then HasShown=True 
+		'	HasShown=True
+		'End If
+	'Else
+		'MSGBOX1(   ,"CHANGE LOG")
+	'End If
+	LCAR.LockListStart(List19,False)
+
+	'AlignLists
+	
+	LCAR.BlankScreen(BG)
+	LCAR.ClearScreen(BG)
+	
+	Log("Showmodeselect: Section 31")
+	ShowSection(API.IIF(STimer.CurrentPhoneState=0, 31, 1),False)
+	
+	'ShowSection(1,False)
+	
+End Sub
+
+Sub NextStage(Element1 As Int, Element2 As Int)
+	LCARSeffects.NextStage(Element1,Element2,4)
+End Sub
+
+'Sub Test
+	'Dim angle As Int
+	'For angle=0 To 360 Step 45
+	'	x=findXY(50,50,50,angle,True)
+	'	y=findXY(50,50,50,angle,False)
+	'	Log("angle: " & angle & " X: " & X & " Y: " & Y ) 
+	'Next
+'End Sub
+
+
+
+Sub ShowNotConnected(Text As String)
+	CurrentSection = -4
+	If CurrentSection<> 999 Then
+		LCAR.LCAR_HideAll(BG,False)
+		If Text.Length=0 Then Text="YOU ARE CURRENTLY OFFLINE"
+		If LCAR.SmallScreen Then
+			LCAR.MoveLCAR(77,   56, 102,   0,  0, 0, True, False, False)'static
+		Else
+			LCAR.MoveLCAR(77, 100 * LCAR.ScaleFactor  + 15 , LCAR.GetScaledPosition(3,False),   0,  0, 0, True, False, False)'static
+		End If
+		LCAR.SetRedAlert(True)
+		ShowFrame(True,True)
+		LCAR.ForceShow(77,True)
+		LCAR.LCAR_SetElementText(LCARSeffects.FrameElement+11, "", "")
+		SetElement18Text(Text)
+		LCAR.PlaySoundAnyway(32)
+	End If
+End Sub
+
+
+'Sub ShowNotConnected(Text As String)
+'	'LCAR.LCAR_HideAll(BG,False)
+'	LCAR.SetRedAlert(True)
+'	ShowFrame(True,True)
+'	LCAR.ForceShow(77,True)
+'	LCAR.LCAR_SetElementText(LCARSeffects.FrameElement+11, "", "")
+'	SetElement18Text(API.IIF(Text.Length=0, "YOU ARE CURRENTLY OFFLINE", Text))
+'	'LCAR.PlaySoundAnyway(32)
+'End Sub
+
+Sub BrowseWeb(URL As String, Mode As Int )
+	WebMode=Mode
+	LCAR.ToastAlign=True
+	If WebMode=0 Then
+		CurrentSection=5
+		LCARSeffects.frameoffset=0
+		LCAR.LCAR_HideAll(BG,True)
+		If API.IsConnected Then
+			MoveWebview
+			LCAR.SetRedAlert(False)
+			ShowFrame(True,True)
+			'webview1.loadurl(api.MakeHTML(""))
+			LCAR.LCAR_SetElementText(LCARSeffects.FrameElement, API.IIF(LCAR.SmallScreen, "SRCH", "SEARCH"), "")
+			LCAR.LCAR_SetElementText(LCARSeffects.FrameElement+11, API.IIF(LCAR.SmallScreen, "HIST", "HISTORY"), "")
+			SetElement18Text(API.Title.Replace(" - ", CRLF).Replace(" | ", CRLF).ToUpperCase)
+		Else
+			ShowNotConnected("")
+			Return
+		End If
+	End If
+	LCAR.ToastAlign=True
+	
+	'webview1.Left= API.iif(LCAR.SmallScreen, 50,100) + LCAR.ChartSpace
+	'webview1.top= API.iif(LCAR.SmallScreen, 100,195)
+	
+	webview1.Visible = True
+	MoveWebview
+	lastURL=URL
+	If URL.Length=0 Then
+		LCAR.SetRedAlert(False)
+		SetElement18Text(API.Title.Replace(" - ", CRLF))
+		webview1.Visible = True
+		webview1.loadurl(API.ScrollTo(-1))
+	Else If URL.ToLowerCase.StartsWith("file:///") Then
+		webview1.LoadUrl(URL & API.aHREF)
+	Else
+		API.DownloadURL( lastURL )
+	End If
+End Sub
+
+
+
+
+Sub HideSideBar
+	LCAR.HideSideBar(BG,List19,3)
+End Sub
+Sub SeedSideBar(Items As List,DoAnimation As Boolean, LeftBar As Boolean )
+	LCAR.SeedSideBar(BG,List19,Items, DoAnimation, LeftBar, 3)
+End Sub
+
+Sub ShowSubSection(Section As Int)
+	Log("ShowSubSection: " & Section)
+	ShowSection(31,False)
+	HandleCOMMS(List19,Section)
+End Sub
+Sub HandleButtonList(Index As Int)
+	Select Case CurrentSection
+		Case 1'answered call
+			Select Case Index'isOnSpeaker
+				Case 0'dialer
+					API.StartDialer
+					'ShowSubSection(1)
+					
+				Case 1'contacts
+					ShowSubSection(0)
+				
+				Case 2'speaker phone
+					If STimer.isOnSpeaker Then
+						LCAR.LCAR_SetListitemText(LCAR.ButtonList, 2, "SPKR OFF","")
+						STimer.AC.disableSpeakerphone 
+						STimer.isOnSpeaker=False
+					Else
+						LCAR.LCAR_SetListitemText(LCAR.ButtonList, 2, "SPKR ON","")
+						STimer.AC.enableSpeakerphone 
+						STimer.isOnSpeaker=True
+						STimer.LastSPKR=DateTime.Now 
+					End If
+				Case 3'release
+					API.StopTimer(0, "End button")
+					HangUpCall
+					ShowModeSelect
+					GotoSleep
+					
+			End Select
+		Case 31'communicator
+			HandleCOMMS(-3,Index)
+		Case -2'Settings
+			ShowModeSelect
+			DonotClose=False
+			GotoSleep
+			'API.GotoSleep
+		Case Else
+			Log("UNKNOWN SECTION: " & CurrentSection)
+	End Select
+End Sub
+
+Sub HandleSidebar(Index As Int)
+	Log("HandleSidebar: " & Index & " CurrentSection: " & CurrentSection)
+	Select Case CurrentSection
+		'Case -2'Settings
+		'	CurrentSettingsSection=Index
+		'	ShowSettings(False,False)
+		Case -1'Mode select
+			SeedSectionList(Index)
+
+		Case -2, 31'communicator
+			HandleCOMMS(List19,Index)
+		Case Else
+			MSGBOX1(CurrentSection, "CurrentSection")
+	End Select
+End Sub
+
+
+Sub ShowPrompt(Title As String, Text As String,QuestionID As Int, RightButton As String, LeftButton As String)
+	LCARSeffects.ShowPrompt(BG, 12, Title, Text, QuestionID, RightButton, LeftButton)
+End Sub
+Sub TextPrompt(Title As String, Text As String, QuestionID As Int, Default As String)
+	LCAR.SelectText(Default)
+	LCARSeffects.ShowPrompt(BG,-10, Title, Text,QuestionID,"OK", "CANCEL")
+End Sub
+
+
+
+
+Sub SeedSection(Name As String, Index As Int)As Int 
+	Return LCAR.LCAR_AddListItem(0, Name, LCAR.LCAR_Random, -1, Index, False, "", 0 , False, -1) 
+End Sub
+
+
+Sub SeedSectionList(Section As Int)
+	If Section = -1 Then Section = Max(0, MenuSection)
+
+	MenuSection = Section
+	LCAR.LCAR_ClearList(0,0)
+	'ALL SENSORS FUNCTIONAL GAME GNDN/NOVELTY SYSTEM
+
+	SeedSection("COMMUNICATOR", 31)
+	SeedSection("BACK", 0)
+	
+	'LCAR.LCAR_AddListItems(0, LCAR.LCAR_Random,0, Array As String("INTRO", "WIFI CHART", "SCAN ANIMATION", "SENSOR METERS", "AUTO DESTRUCT TIMER", "MEMORY ALPHA BROWSER", "FORWARD NAVIGATION SCAN", "FREQUENCY", "ULTRA MOBILE REMOTE", "TACTICAL", "OKUDAGRAM GENERATOR", "ALERT CONDITION",  "FEDERATION DATABASE", "CLOCK", "ANALYSIS", "WARP CORE STATUS", "CAPTAINS LOG", "ANGRY TRIBBLES", "MEMORY ALLOCATION", "SCIENCE STATION",                   "SETTINGS" ) )
+	'AddOmega
+End Sub
+
+Sub ShowSection(Index As Int, IsRightSide As Boolean )
+	Dim DontShow As Boolean 
+	LCAR.HideToast 
+	Log("ShowSection: " & Index)
+	If IsRightSide Then
+		Select Case Index
+			Case 0: LCAR.ToastMessage(BG, "GO BACK TO THE LCARS UI", 4)
+			Case 31: LCAR.ToastMessage(BG, "ACCESS THE DIALER, SMS MESSAGES AND CALL LOGS", 4)
+		End Select
+		LCAR.LCAR_HideElement(BG,List19,True,False, True)
+	Else If Index = -1 Then
+		LCAR.SetRedAlert( Not(LCAR.RedAlert) )
+		LCAR.ToastMessage(BG, "NO SECTION WAS SELECTED", 2)
+		LCAR.PlaySound(0,False)
+	Else
+		LCAR.LockListStart(List19,False)
+		LCAR.LCAR_SetElementText(LCARSeffects.FrameElement+11, "", "")
+		LCAR.ForceHideAll(BG)
+		LCAR.LCAR_HideElement(BG,List19,True,False, True)
+		'LCAR.SetRedAlert(False)
+		SetElement18Text("")
+		LCAR.LCAR_HideElement(BG,Element18, False,False,True )
+		LCAR.LCAR_HideElement(BG,0,True,False,True )'list 0
+		LCAR.LCAR_HideElement(BG,Element04,False,False,True)
+		CurrentSection=Index
+		Select Case Index
+
+			Case 0'intro
+				ReturnToApp("")
+			
+			Case 1'answer phone
+				ShowUFPlogo
+			
+			Case 31'communicator
+				HandleCOMMS(-1,-1)
+				
+			Case Else'settings
+				ShowSettings(True,False)
+		End Select
+	End If 
+	AlignLists
+End Sub
+
+Sub answerscreen
+	'debug("ANSWER SCREEN")
+	'Activity.BringToFront 
+	SetShowWhenLocked(True)
+	ShowSection(1,False)
+End Sub
+
+
+
+
+
+
+
+
+Sub BlockedCaller(ID As Int, Load As Boolean, Value As Boolean)As Boolean 'Settings
+	If Load Then 'incoming call, check if blocked
+		If ID=-1 Then
+			Return Settings.GetDefault("BlockUnknown", STimer.DoNotDisturb)
+		Else
+			If STimer.DoNotDisturb Then Return Not(Settings2.GetDefault("White" & ID, False))
+			Return Settings2.GetDefault("Block" & ID, False)
+		End If
+	Else If ID>-1 Then 'change setting
+		Settings2.Put("Block" & ID, Value)
+		Settings2.Put("White" & ID, False)
+	End If
+End Sub
+
+Sub BroadcastDisabler
+	'CallSub2(STimer, "Broadcast", API.IIFIndex(STimer.CurrentPhoneState ,  Array As String("IDLE", "OFFHOOK", "RINGING")))
+	API.broadcast("State", API.IIFIndex(STimer.CurrentPhoneState ,  Array As String("IDLE", "OFFHOOK", "RINGING")))
+End Sub
+
+Sub SetupButtonBar As Int
+	Dim tempList As LCARlist 
+	
+	'Proximity.StartListening("Proximity")	
+	LCAR.LCAR_HideElement(BG,ElementAnswer,False,False,True)
+	LCAR.SeedButtonBar(BG, Array As String("DIAL", "PPL", "SPKR " & API.IIF(STimer.isOnSpeaker, "ON", "OFF") , "END"))
+	LCAR.ResizeList(LCAR.ButtonList,  -1,72,  0,   0,-72,True)
+	
+	LCAR.MoveList(LCAR.ButtonList, 0, -72)
+	
+'	tempList = LCAR.LCARlists.Get(LCAR.ButtonList)
+'	tempList.LOC.currY = tempList.LOC.currY + tempList.LOC.offY 
+'	tempList.LOC.offY  = 0
+	
+	Return LCAR.ButtonBarHeight
+End Sub 
+
+Sub ShowUFPlogo'316*246
+	Dim Height As Int ,Y As Int ,Y2 As Int,CID As Contact,Text As String ,Text2 As String ,Text3 As String ,Blocked As Boolean ,IsMe As Boolean ,PhoneName As String 
+	'CONTACTINFO="9053350098"
+	BroadcastDisabler
+	DonotClose=False
+	LCAR.ForceHideAll(BG)
+	'API.NewTimer("Main", 0, STimer.Infinite)
+	UMRsection=-1
+	CurrentSection=1
+	STimer.ProximityEnabled=True
+	ProximityState(True,"ShowUFPlogo")
+	needsreloading=False
+	Try
+		If webview1.IsInitialized Then  webview1.Visible=False
+	Catch
+		API.ForceMain
+	End Try
+	Y2=STimer.CurrentPhoneState
+	If CONTACTINFO = "*1*" Then
+		IsMe=True
+		Text = "STARFLEET COMMAND"
+		Y2=API.IIF( LCAR.IsPlaying AND LCAR.WasPlaying=5 ,0,2)
+		If LCAR.cVol=0 Then LCAR.Volume(100,True)
+	Else
+		If Not(STimer.IncomingCall) Then CONTACTINFO= STimer.OutgoingNumber 
+		CID= API.GetContactByPhoneNumber(CONTACTINFO)
+		If CID.DisplayName=Null Then
+			Text= CONTACTINFO
+			Blocked= BlockedCaller(-1,True,False) 
+			'If Blocked Then 
+			Text = "Unknown " & API.IIF(STimer.IncomingCall, "caller", "recipient")
+		Else
+			PhoneName = API.GetPhoneLabel(CID.Id , CONTACTINFO)
+			Text=CID.DisplayName.ToUpperCase 
+			Blocked=BlockedCaller(CID.Id,True,False) 
+		End If
+	End If
+	If Blocked Then
+		'ShowModeSelect
+		If Not(STimer.DoNotDisturb) Then Speak("Rejected Call from " & Text)
+		HandleCallAnswer(False, False)
+		GotoSleep 
+	Else
+		'debug("CurrentPhoneState: " & Y2)'STimer.CurrentPhoneState)
+		LCAR.ForceShow(ElementTopBar,True)
+		'LCAR.LCAR_SetElementText(ElementBigText, API.GetTime( (DateTime.Now - CurrentTime)/ DateTime.TicksPerSecond ),"")
+		If STimer.IncomingCall OR IsMe Then
+			If Y2=2 Then'ringing
+				LCAR.HideButtonBar(BG)
+				LCAR.MoveLCAR(ElementAnswer, 0, -LCAR.ItemHeight,-1,LCAR.ItemHeight,0,True,True,False)
+				LCAR.ResetLCARAnswer(ElementAnswer,-1)
+				Speak(Text & " is calling" & API.IIF(PhoneName.Length=0, "", " from " & PhoneName))
+				If CallsAnswered<5 Then
+					'LCAR.ToastAlign=True
+					'LCAR.ToastMessage(BG, "TO ANSWER: SWIPE ALL THE WAY FROM YES TO NO", 3)
+					Text2 = "HOW TO ANSWER A CALL:"
+					Text3 = "SWIPE ALL THE WAY FROM YES TO NO"
+				'End If
+				Else
+					Text2="INCOMING TRANSMISSION"
+					Text3= "COMMAND AUTHORIZATION REQUIRED"			
+				End If
+			Else'answered
+				Y=SetupButtonBar
+				Text2=CallTime 'API.GetTime( (DateTime.Now - CurrentTime)/ DateTime.TicksPerSecond )'"00:00"'insert timer here
+				Text3="COMMAND AUTHORIZATION ACCEPTED"
+				If CurrentTime= 0 Then 
+					Text3 = "DIRECTED TO VOICEMAIL"
+					API.NewTimer("TurnOff",1,5)
+				End If
+			End If
+			
+			If CID.DisplayName=Null Then PhoneName = CONTACTINFO 
+		Else	
+			'LCAR.LCAR_Hideelement(BG, List19 , True,False,True)
+			'LCAR.LCAR_Hideelement(BG, List16 , True,False,True)
+			'LCAR.LCAR_Hideelement(BG, List27 , True,False,True)
+			
+			' Y2=2 Then'ringing
+				'LCAR.LCAR_HideElement(BG,ElementAnswer,False,False,True)
+				LCAR.HideButtonBar(BG)
+				Text2= CallTime'"00:00"' "OUTGOING TRANSMISSION"
+				Text3= "HAILING FREQUENCIES OPEN"	
+				Y=SetupButtonBar'LCAR.ButtonBarHeight
+				'LCAR.SeedButtonBar(BG, Array As String("DIAL", "PPL", "SPKR " & API.IIF(STimer.isOnSpeaker, "ON", "OFF") , "END"))
+				'LCAR.ResizeList(LCAR.ButtonList,  -1,72,  0,   0,-72,True)
+			'Else
+				'Y=LCAR.ButtonBarHeight
+				'Text2='insert timer here
+				'Text3="HAIL ACCEPTED"
+			'End If
+		End If
+		
+		
+		
+		Y=LCAR.ItemHeight*2
+		Height=Min((LCAR.ScaleHeight-Y) * 0.5, 246 * LCAR.ScaleFactor)
+		Y=LCAR.ItemHeight + ((LCAR.ScaleHeight-Y)/4-(Height/2))
+		LCAR.ForceElementData(ElementPicture,0, Y,   0,0,     -1,Height,     0,0,     0,255,     True,True)
+		
+		Y=Y+Height
+		Y2=LCAR.ScaleHeight/2
+		
+		Height =Min( LCAR.GetTextHeight(BG, (Y2-LCAR.ItemHeight*2)/3,  Text2),  LCAR.GetTextHeight(BG, -LCAR.ScaleWidth,  Text2))
+		Y=Max(Y,Y2)
+		LCAR.ForceElementData(ElementBigText,0,Y,      0,0,     -1, Height,      0,0,      0,255,      True, True)
+		LCAR.LCAR_SetElementText(ElementBigText, Text2,"")
+		
+		Height=(Y2-LCAR.ItemHeight*2)/3
+		Y=Y+Height
+		
+		If Not(LCAR.Landscape) Then Height=Height/2 '(Y2-LCAR.ItemHeight*2)/4
+		Text2=API.IIF(STimer.IncomingCall, "TO:", "FROM:") & " CAPT. " & API.GetUserName(1).ToUpperCase & " • U.S.S. " & Starshipname & " • " & StarshipID
+		Height=Min(LCAR.GetTextHeight(BG, Height,  Text2),  LCAR.GetTextHeight(BG, -LCAR.ScaleWidth,  Text2))
+		
+		'Height=  LCAR.GetTextHeight(BG, -LCAR.ScaleWidth,  Text2)
+		If PhoneName.Length>0 Then PhoneName = " • " & PhoneName.ToUpperCase 
+		LCAR.LCAR_SetElementText(ElementSmlText, "", Text2 & CRLF & API.IIF(STimer.IncomingCall, "FROM: ", "TO: ") & Text.ToUpperCase & PhoneName & CRLF & Text3)
+		LCAR.ForceElementData(ElementSmlText, 0,Y,    0,0,       -1,Height,       0,0,      0,255,    True,True)
+		
+		NeedsShowFrame = False
+		LCARSeffects.HideFrame 
+	End If
+End Sub
+
+Public Sub CallTime As String 
+	If CurrentTime= 0 Then 
+		Return "CALL REJECTED"
+	Else
+		Return API.GetTime( (DateTime.Now - CurrentTime)/ DateTime.TicksPerSecond )
+	End If
+End Sub
+
+Sub ReturnToApp(ExtraInfo As String)
+	Dim PM As PackageManager ,tempstr As String , tempintent As Intent 
+	tempintent = PM.GetApplicationIntent("com.omnicorp.lcarui.test")
+	If ExtraInfo.length >0 Then 
+		tempintent.PutExtra("CMD", ExtraInfo)
+		ExtraInfo=DateTime.Now
+		tempintent.PutExtra("DAT", ExtraInfo)
+		Log("DIALER: " & tempintent.ExtrasToString)
+	End If
+	Log("ReturnToApp")
+	ShowSection(31,False)
+	StartActivity(tempintent)
+End Sub
+
+
+Sub SeedDND
+	Redial("DND " & API.IIF(STimer.DoNotDisturb,"ON","OFF"))
+	If STimer.DoNotDisturb Then LCAR.ToastMessage(BG, "DO NOT DISTURB MODE IS ON",3)
+End Sub
+Sub Redial(Item As String)
+	If Item.Length=0 Then
+		If STimer.OutgoingNumber.Length>0 Then SendCall(STimer.OutgoingNumber)
+	Else If STimer.OutgoingNumber.Length=0 Then
+		LCAR.SeedButtonBar(BG, Array As String(Item))
+	Else
+		LCAR.SeedButtonBar(BG, Array As String(Item, "REDIAL"))
+	End If
+	If STimer.CurrentPhoneState = 1 Then 
+		LCAR.HideToast
+		LCAR.ToastMessage(BG, "YOU CAN'T DIAL WITHIN A CALL", 3)
+	End If
+End Sub
+
+Sub ClickBack
+	webview1.Visible=False
+	LCAR.LCAR_HideElement(BG, LCAR.ButtonList,True,False,True)'buttonbar
+	SetElement18Text("")
+	UMRsection=LastUMRsection
+	LCAR.LCAR_HideElement(BG, 3,True,True,True)'settings
+	LCAR.SeedButtonBar(BG, Array As String("BACKUP"))
+End Sub
+
+Sub HandleCOMMS(ListID As Int, ItemIndex As Int) As Boolean 
+	Dim temp As Int ,temp2 As Int, tempContact As Contact  ,tempList As List,tempstr As String 
+	'MSGBOX1(ListID,ItemIndex)
+	Select Case ListID
+		Case -3'buttonbar
+			'debug("UMRsection " & UMRsection)
+			Select Case UMRsection
+				Case -2'SMS quick reply list (settings)
+					'ShowModeSelect
+					Select Case ItemIndex
+						Case 0
+							STimer.DoNotDisturb=Not(STimer.DoNotDisturb)
+							SeedDND
+						Case 1: Redial("")
+					End Select
+				Case 1'Dialer
+					Select Case ItemIndex
+						Case 0: SendCall(LCAR.GetSelectedText)
+						Case 1: Redial("")
+					End Select
+				Case 2,3'backup call/sms logs
+					Select Case ItemIndex
+						Case 0'backup
+							LCAR.ToastMessage(BG, "LOGS SAVED TO: " & API.Backup(UMRsection=2, File.DirRootExternal, ""), 3)
+						Case 1'clear
+							temp = MSGBOX3("DO YOU WANT TO DELETE ALL YOUR CALL LOGS?", "DELETE CALL LOGS", "YES", "NO", "")
+							If temp = DialogResponse.POSITIVE Then 
+								LCAR.LCAR_ClearList(3,0)
+								LCAR.ToastMessage(BG, "CALL LOGS DELETED", 2)
+								API.ClearCallLogs 
+							End If
+					End Select
+				Case 7'sms log
+					Select Case ItemIndex
+						Case 0:SendTextMessage(LastContact)'reply
+						Case Else
+							If ItemIndex = 1 Then
+								'clear/delete logs
+								temp = MSGBOX3("ARE YOU SURE YOU WANT TO DELETE THIS CONVERSATION?", "DELETE SMS LOG", "YES", "NO", "")
+								If temp = DialogResponse.POSITIVE Then
+									 API.DeleteSMSlogs(LastSMSID, LastIsPerson)
+									 LCAR.ToastMessage(BG, "SMS LOG DELETED",2)
+									 LCAR.LCAR_RemoveListitem(3, -1)
+								Else
+									Return
+								End If
+							End If
+							
+						'Case 2'back
+							ClickBack
+					End Select
+				
+				Case Else
+					Log("UMRsection " & UMRsection)
+			End Select
+		
+		Case -2'keyboard ItemIndex: show=1/hide=-1
+			If ItemIndex = -1 Then'hide
+				HandleCOMMS(-1,-4)
+				'MSGBOX1(UMRsection,"SHOW")
+				HandleCOMMS(-1,UMRsection)
+				Select Case CurrentSection & "." & UMRsection
+					Case "31.8", "31.9"	
+						If (UMRsection= 8 AND Not(LCAR.ClickedOK)) OR UMRsection=9 Then
+							LCAR.LCAR_HideElement(BG,3,True,True,True)
+							ResizeSetting(4)
+							If UMRsection = 9 AND LCAR.ClickedOK Then
+								'MSGBOX1(GetSelectedEmailAddress, "SAVEMAIL")
+								MailParser.SaveQuickEmail(CurrentEmailAddress,CurrentSubject,LCAR.GetSelectedText)
+								LCAR.ToastMessage(BG, "MESSAGE TO " & GetSelectedEmailAddress.ToUpperCase & " WAS SAVED", 3)
+							End If
+							UMRsection=5
+						End If
+				End Select
+			End If
+			
+		Case -1,List19
+			'MSGBOX1(ItemIndex,19)
+			LCAR.LCAR_HideElement(BG, List27,True,False,True)'mini list
+			LCAR.LCAR_HideElement(BG, 3,True,False,True)'settings
+			LCAR.LCAR_HideElement(BG, 4,True,False,True)'sub-settings
+			LCAR.LCAR_HideElement(BG, LCAR.ButtonList,True,False,True)'buttonbar
+			webview1.Visible=False
+			SetElement18Text("")
+			
+			If ItemIndex>-3 Then 
+				UMRsection = ItemIndex
+				If ItemIndex>-1 Then LCAR.ForceShow(LCAR.KBCancelID+5,False)'textbox
+			End If
+			Log("HandleCOMMS List19: " & ItemIndex)'if lcarseffects.IsFrameVisible 
+			Select Case ItemIndex 
+				Case -6'show/clear settings list
+					ResizeSetting(5)
+					LCAR.LCAR_HideElement(BG, 3,True,True,True)
+					LCAR.LCAR_ClearList(3,0)
+					CurrentSettingsSection=-16
+						
+				Case -5'clear/show/resize cols of mini list
+					LCAR.LCAR_ClearList(List27,0)
+					LCAR.LCAR_HideElement(BG, List27,True,True,True)
+					Select Case UMRsection
+						Case -2:temp=5'search
+						Case 1:temp=4'dialer
+					End Select
+					If temp>0 Then LCAR.LCAR_SetListCols(List27, temp,temp)
+					
+				Case -4'seed sidebar items
+					SetupSidebar
+					
+				Case -3'keyboard OK button
+					'API.SendTextMessage("9055123067", LCAR.GetSelectedText)
+					Select Case UMRsection
+						Case -2'TXT search
+							HandleCOMMS(-1,-4)'seed sidebar items
+							ContactList = API.EnumContacts(LCAR.GetSelectedText, True)
+							HandleCOMMS(-1,0)'PPL
+						Case 5,7'sms reply
+							'MSGBOX1(LCAR.GetSelectedText, "TEXT TO " & LastContact)
+							API.SendTextMessage(LastContact, LCAR.GetSelectedText,True)
+							HandleCOMMS(-1, UMRsection)
+						
+						Case 8'subject
+							CurrentSubject = LCAR.GetSelectedText 
+							UMRsection=9
+							TextPrompt("BODY", "", -3, "")
+
+
+						Case Else: Log("UMRsection: " & UMRsection & " NOT RECOGNIZED")
+					End Select
+				Case -2'Search button
+					LCAR.LCAR_SetListStyle(BG, List27, 0, True)
+					HandleCOMMS(-1,-5)'clear/show/resize cols of mini list
+					LCAR.LCAR_AddListItems(List27, LCAR.LCAR_Random, 0, Array As String("A", "F", "K", "P", "U", "Z",	 "B", "G", "L", "Q", "V", "#", 	"C", "H", "M", "R", "W", "FAV",		 "D", "I", "N", "S", "X", "ALL",	"E", "J", "O", "T", "Y", "TXT"))'list 24
+					SeedDND
+										
+				Case -1'enter screen
+					LCAR.SetRedAlert(False)
+					'debug("WELCOME " & API.GetUserName(0).ToUpperCase )
+					LCAR.SelectText("")
+					LCAR.LCAR_ClearList(3,0)
+					LCAR.LCAR_SetElementText(LCARSeffects.FrameElement, API.IIF(LCAR.SmallScreen, "SRCH", "SEARCH"), "")
+					HandleCOMMS(-1,-4)'SeedSideBar(Array As String("PPL", "DIAL", "LOGS", "SMS"), True,True)', "MIC"), True,True)
+					HandleCOMMS(-1, -2)'Search button
+
+				Case 0'PPL
+					ProximityState(False, "PPL")
+					If API.ListSize(ContactList)=0 Then
+						If ContactList.IsInitialized Then LCAR.ToastMessage(BG, "NO CONTACTS FOUND", 2)
+						HandleCOMMS(-1,-2)'Search button
+					Else
+						HandleCOMMS(-1,-6)'show/clear settings list
+						For temp = 0 To ContactList.Size-1
+							tempContact=ContactList.Get(temp)
+							SeedSetting(tempContact.DisplayName.ToUpperCase, tempContact.Id , tempContact.PhoneNumber)' API.FilterPhoneNumber( tempContact.PhoneNumber))'tempContact.Notes.ToUpperCase
+						Next
+						LCAR.LCAR_SortList(3)
+					End If
+					SeedDND
+					
+				Case 1'Dialer
+					ProximityState(False,"Dialer")
+					LCAR.LCAR_SetListStyle(BG, List27, LCAR.PCAR_Button, True)					
+					HandleCOMMS(-1,-5)'"ı>", "DEL",  "CLR", "BKSP",
+					LCAR.LCAR_AddListItems(List27, LCAR.LCAR_Random, 0, Array As String("1", "4", "7", "<ı", 	 "2", "5", "8", "0",  	"3", "6", "9", "ı>",	"#", "*","BKSP","CLR"  ))'list 24
+					LCAR.LCAR_SetListItemSides(List27, Array As String("", "GHI", "PQRS", "", 	 "ABC", "JKL", "TUV", "+",  	"DEF", "MNO", "WXYZ"  ))
+					Redial("DIAL")
+					LCAR.ShowTextbox(BG) 
+					LCAR.KBShift=False
+					LCAR.SelectText("")
+					
+				Case 2'Call logs (all)
+					HandleCOMMS(-1,-6)'show/clear settings list
+					LCAR.SeedButtonBar(BG, Array As String("BACKUP", "CLEAR"))
+					ShowCallLogs(API.EnumCallLogs(100, Null),0)
+				
+				Case 3'SMS logs (all)
+					HandleCOMMS(-1,-6)'show/clear settings list
+					tempList= API.EnumSMSmessagesByThread(-1,False)
+					If tempList.Size=0 Then
+						LCAR.ToastMessage(BG, "NO SMS MESSAGES FOUND", 3)
+					Else
+						LCAR.SeedButtonBar(BG, Array As String("BACKUP"))
+						'MSGBOX1(tempList,"tempList")
+						For temp = 0 To tempList.Size-1
+							temp2=tempList.Get(temp)
+							'MSGBOX1(temp2,temp2)
+							tempContact=API.GetContactByThreadID(temp2)
+							'MSGBOX1(tempContact,temp2)
+							If tempContact.DisplayName = Null Then
+								SeedSetting2("UNKNOWN", temp2, API.AddressOfThread(temp2), API.IIF(temp< API.UnreadThreads, LCAR.LCAR_Red, LCAR.LCAR_Orange), -1, 0)
+							Else'API.FilterPhoneNumber(tempContact.PhoneNumber)
+								SeedSetting2(tempContact.DisplayName.ToUpperCase, temp2,  tempContact.PhoneNumber, API.IIF(temp< API.UnreadThreads, LCAR.LCAR_Red, LCAR.LCAR_Orange), -1, 0)
+							End If
+						Next
+					End If
+					
+				Case 4'SETTINGS
+					SetElement18Text("NONE OF THESE SETTINGS DO ANYTHING YET")
+					SeedSetting("USE VOICE SYNTHESIS", "SAY THE CALLER'S NAME INSTEAD OF RINGING", "DISABLED")
+					SeedSetting("ANSWER CALLS", "ANSWER CALLS USING THIS APP", "DISABLED")
+					SeedSetting("TEXT REPLY LIST", "QUICK REPLIES FOR REJECTED CALLS", "")
+				
+				Case 5'view contact info
+					ResizeSetting(4)
+					LCAR.LCAR_HideElement(BG, 3, True,True,True)
+					
+				Case 7'view sms log
+					ShowTextMessages(-1,True)
+			End Select
+		
+		Case 3'settings list
+			Select Case UMRsection
+				Case 0'contacts list
+					temp=LCAR.LCAR_GetListItem(3, ItemIndex).Tag
+					'temp=API.FindContactID(LCAR.LCAR_GetListItem(3, ItemIndex).Tag,ContactList )
+					If temp>-1 Then
+						HandleCOMMS(-1,-6)'show/clear settings list
+						tempContact = API.GetContactByID(temp)' ContactList.Get(temp)
+						ListContactInfo(tempContact, 10)
+						'debug(tempContact)
+						'debug("phone numbers: " & tempContact.GetPhones   )'works
+						'debug("email addresses: " & tempContact.GetEmails )'works
+						'API.EnumCallLogs(0,  tempContact.GetPhones  ) 'works
+						'API.EnumCallLogsByID(0,tempContact.Id)
+						'API.EnumSMSmessages(tempContact.Id)
+					End If
+				Case 2'call logs
+					ShowCallLogs(Null, ItemIndex)
+					Return True
+				Case 3'SMS log
+					ShowTextMessages(LCAR.LCAR_GetListItem(3, ItemIndex).Tag,False)
+				Case 4'settings
+					'LCAR.ToastMessage(BG, "THIS DOESNT DO ANYTHING YET",2)
+				Case 5'view contact info
+					Return ListContactInfo(Null,ItemIndex)
+			End Select
+			
+		
+		Case 4'sub-settings list
+			tempstr=LCAR.LCAR_GetListItem(4, ItemIndex).Text 
+			If tempstr="BACK" Then
+				HideSubSettings
+			Else
+				Select Case UMRsection
+					Case 2'call logs
+						Select Case tempstr
+							Case "CALL": 		SendCall(GetSelectedPhoneNumber)
+							Case "TEXT":		SendTextMessage(GetSelectedPhoneNumber)
+							Case "EDIT+CALL": 	EditCall(GetSelectedPhoneNumber)
+						End Select
+					Case 5'view contact info
+						Select Case tempstr	
+							Case "CALL": 		SendCall(GetSelectedPhoneNumber)
+							Case "EDIT+CALL": 	EditCall(GetSelectedPhoneNumber)
+							'Case "NAME"
+							'	VRQuestion(1)
+							'	HideSubSettings
+							Case "LINK"
+								MakeLink(CurrentContact, GetSelectedPhoneNumber)
+							Case "TEXT"
+								'MSGBOX1(GetSelectedPhoneNumber, tempstr)
+								SendTextMessage(GetSelectedPhoneNumber)
+							Case "EMAIL":	'MSGBOX1(LCAR.LCAR_GetListItem(3, LCAR.LCAR_SelectedItem).Text, "EMAIL")
+								SendEmail("")
+							Case "BLOCK"
+								BlockedCaller(CurrentContact.Id, False,True)
+								LCAR.ToastMessage(BG, CurrentContact.DisplayName.ToUpperCase & " WAS BLOCKED", 3)
+							Case "UNBLOCK"
+								BlockedCaller(CurrentContact.Id, False,False)
+								LCAR.ToastMessage(BG, CurrentContact.DisplayName.ToUpperCase & " WAS UNBLOCKED", 3)
+							Case "WHITE"
+								BlockedCaller(CurrentContact.Id, False,False)
+								Settings2.Put("White" & CurrentContact.Id, True)
+								LCAR.ToastMessage(BG, CurrentContact.DisplayName.ToUpperCase & " WAS WHITE LISTED", 3)
+								
+							Case Else
+								MSGBOX1("COMMAND NOT RECOGNIZED", tempstr)
+						End Select
+					Case Else
+						MSGBOX1("SECTION NOT RECOGNIZED " & tempstr, UMRsection)
+				End Select
+			End If
+		
+		Case List27'mini control panel list
+			Select Case UMRsection
+				Case -2'ppl
+					'11=#, 17=FAV, 23=ALL, 29=TXT
+					Select Case ItemIndex
+						Case 11: ContactList = API.EnumContacts("#", True) 	'numbers
+						Case 17: ContactList = API.EnumContacts("*", True)	'favorites
+						Case 23: ContactList = API.EnumContacts("", True)	'all
+						Case 29'search by text
+							LCAR.ShowKeyboard(BG,10)
+							LCAR.LCAR_HideElement(BG, List19,True,False,True)
+							LCAR.LCAR_HideElement(BG, List27,True,False,True)
+							LCARSeffects.frameoffset=0
+							Return False
+						Case Else: ContactList = API.EnumContacts(LCAR.LCAR_GetListItem(List27,ItemIndex).Text & "*", True)'search by first letter
+					End Select
+					HandleCOMMS(-1,0)					
+				Case 1'dialer
+					'If ItemIndex=5 Then
+					'	API.SendCall(LCAR.GetSelectedText)
+					'Else
+						temp = API.GetKeyCode(LCAR.LCAR_GetListItem(List27,ItemIndex).Text,False, False)
+						LCAR.HandleKeyboard( temp )
+					'End If
+			End Select		
+	End Select
+End Sub
+
+Sub MakeLink(TheContact As Contact, TheNumber As String)
+	If API.IsPackageInstalled("com.omnicorp.lcarui.launcher") Then
+		API.BroadcastToLauncher3("contact", TheContact.DisplayName, "number", TheNumber, "label", API.GetPhoneLabel(TheContact.Id, TheNumber))
+	Else
+		LCAR.ToastMessage(BG, "THIS OPTION IS ONLY FOR THE LCARS LAUNCHER", 3)
+	End If
+End Sub
+
+Sub SendCall(Number As String) 
+	If Number = "*1*" Then
+		CONTACTINFO=Number
+		LCAR.ForceHideAll(BG)
+		ShowUFPlogo
+	Else
+		API.SendCall(Number)
+	End If
+	'LCAR.ToastMessage(BG, "CALL FAILED OR PHONE HARDWARE NOT PRESENT",2)
+End Sub
+
+Sub EditCall(Number As String)
+	HandleCOMMS(-1,1)
+	LCAR.SelectText(Number.Replace("-", ""))
+End Sub
+
+Sub GetSelectedEmailAddress() As String 
+	Dim tempitem As LCARlistitem , text() As String
+	tempitem=LCAR.LCAR_GetListItem(3, LCAR.LCAR_SelectedItem)
+	Select Case tempitem.Tag 
+		Case "3": Return tempitem.text 
+	End Select
+	Return ""
+End Sub
+Sub GetSelectedPhoneNumber() As String 
+	Dim tempitem As LCARlistitem , text() As String, RET As String 
+	tempitem=LCAR.LCAR_GetListItem(3, LCAR.LCAR_SelectedItem)
+	Select Case tempitem.Tag 
+		Case "","0", "2","3","4","5"
+		Case "1":RET= tempitem.text  'is a phone number
+		Case Else
+			text = Regex.split("!", tempitem.Tag)
+			RET= text(3)
+	End Select
+	'MSGBOX1(RET, "SEND TEXT")
+	Return RET
+End Sub
+
+Sub HideSubSettings
+	If LCAR.GUIcreated Then
+		If LCAR.IsListVisible(4) Then  LCAR.LCAR_HideElement(BG,4,True,False,True)
+		LCAR.LCAR_ClearList(4,0)
+		ResizeSetting(5)
+	Else
+		HandleGUInotCreated("HideSubSettings")
+	End If
+End Sub
+
+Sub ListContactInfo(TempContact As Contact, WhiteSpace As Int)As Boolean 
+	Dim tempMap As Map , temp As Int, ListItem As LCARlistitem' ,tempstr As String 
+	If TempContact = Null Then
+		ListItem=LCAR.LCAR_GetListItem(3, WhiteSpace)
+		HideSubSettings
+		Select Case ListItem.Tag 
+			Case "","0", "2","5":
+				Return False'GNDN, PHONE NUMBERS header, EMAIL ADDRESSES header, CALL LOGS header
+			Case "1"'is a phone number
+				LCAR.LCAR_AddListItems(4, LCAR.LCAR_Random,0, Array As String("CALL", "TEXT", "LINK", "EDIT+CALL", "BACK") )'Array As String("CALL", "TEXT", "NAME", "BACK") )
+			Case "3"'is an email address
+				LCAR.LCAR_AddListItems(4, LCAR.LCAR_Random,0, Array As String("EMAIL", "BACK") )
+			Case "4"'VIEW SMS MESSAGES
+				ShowTextMessages(ListItem.Side ,True)
+				Return False
+			Case "6"'block caller
+				LCAR.LCAR_AddListItems(4, LCAR.LCAR_Random,0, Array As String("BLOCK", "UNBLOCK", "WHITE"))
+			Case Else'is a call log
+				LCAR.LCAR_AddListItems(4, LCAR.LCAR_Random,0, Array As String("CALL", "TEXT", "EDIT+CALL", "BACK"))
+				ShowCallLogs(Null, LCAR.LCAR_SelectedItem)
+		End Select
+		Return True
+	Else
+		UMRsection=5
+		CurrentContact = TempContact
+		'Select Case ID
+			'Case -1'all
+				SetElement18Text(TempContact.DisplayName & CRLF & TempContact.Notes.Replace(CRLF,", "))
+				SeedSetting2("VIEW SMS MESSAGES", "4", TempContact.id , LCAR.LCAR_Random, -1, 0)
+				SeedSetting("LAST CONTACTED", "", API.HowLongAgo(TempContact.LastTimeContacted))
+				SeedSetting("TIMES CONTACTED", "", TempContact.TimesContacted)
+				If TempContact.Starred Then SeedSetting("IS STARRED","" , "YES")
+				'ListContactInfo(TempContact,0, WhiteSpace)
+				'ListContactInfo(TempContact,1, WhiteSpace)
+				'ListContactInfo(TempContact,2, WhiteSpace)
+			'Case 1'emails	
+				SeedSetting2("EMAIL ADDRESSES", "2", "", LCAR.LCAR_Random, -1, 0)
+				tempMap = TempContact.GetEmails 
+				For temp = 0 To tempMap.Size-1
+					SeedSetting2(tempMap.GetKeyAt(temp), "3", "", LCAR.LCAR_Random, -1, WhiteSpace)
+				Next
+				
+			'Case 0'phones
+				SeedSetting2("BLOCK/WHITELIST", "6", BlockedStatus(TempContact.Id), LCAR.LCAR_Random, -1, 0)
+				SeedSetting2("PHONE NUMBERS", "0", "", LCAR.LCAR_Random, -1, 0)
+				'If TempContact.PhoneNumber.Length>0 Then SeedSetting2(TempContact.PhoneNumber, "1", GetPhoneNickname(TempContact.PhoneNumber,""), LCAR.LCAR_Random, -1, WhiteSpace)
+				tempMap = TempContact.GetPhones 
+				For temp = 0 To tempMap.Size-1
+					'tempstr= API.IIF( API.FilterPhoneNumber(tempMap.GetKeyAt(temp)) = API.FilterPhoneNumber(TempContact.PhoneNumber), "MAIN", GetPhoneNickname(tempMap.GetKeyAt(temp),""))
+					SeedSetting2(tempMap.GetKeyAt(temp), "1", API.GetPhoneLabel(CurrentContact.Id, tempMap.GetKeyAt(temp)).ToUpperCase, LCAR.LCAR_Random, -1, WhiteSpace)
+					'SeedSetting2(tempMap.GetKeyAt(temp), "1", GetPhoneNickname(tempMap.GetKeyAt(temp),""), LCAR.LCAR_Random, -1, WhiteSpace)
+				Next
+			
+			'Case 2'call logs
+				SeedSetting("CALL LOGS", "5", "")
+				ShowCallLogs(API.EnumCallLogs(20,tempMap), WhiteSpace)
+		'End Select
+	End If
+End Sub
+
+
+
+Sub BlockedStatus(ContactID As Int) As String 
+	Return API.IIF(Settings2.GetDefault("White" & ContactID, False), "WHITE", API.IIF(Settings2.GetDefault("Block" & ContactID, False), "BLOCK", "UNBLOCK"))
+End Sub
+
+Sub GetPhoneNickname(PhoneNumber As String, AssignNick As String) As String 
+	Dim tempstr As String 
+	AssignNick = AssignNick.Replace(" ","").ToUpperCase
+	If PhoneNumber.Length =0 Then
+		Return Settings2.GetDefault("np" & AssignNick, "")'look up nickname
+	Else
+		tempstr=PhoneNumber'API.FilterPhoneNumber(PhoneNumber)
+		If AssignNick.Length>0 Then
+			Settings2.Put("pn" & tempstr, AssignNick)'to look up by phone number
+			Settings2.Put("np" & AssignNick, tempstr)'to look up by nick
+			LCAR.ToastMessage(BG, tempstr & " WAS NAMED " & AssignNick, 2)
+		Else
+			Return Settings2.GetDefault("pn" & tempstr, "")
+		End If
+	End If
+End Sub
+
+
+Sub ShowCallLogs(CallLogs As List, WhiteSpace As Int)
+	Dim Call As CallItem, color As Int, ListItem As LCARlistitem , text() As String ,tempstrL As String, tempstrR As String ,DEL As String , NameOfNumber As String 
+	DEL= "!"
+	If CallLogs.IsInitialized  Then
+		If CallLogs.Size = 0 Then
+			LCAR.ToastMessage(BG, "NO CALLS FOUND", 3)
+		Else
+			For temp = 0 To CallLogs.Size - 1
+				Call=CallLogs.Get(temp)
+				If Call.CachedName<> Null Then
+					If Not(Call.Number.EqualsIgnoreCase("0")) Then
+						Select Case Call.callType
+					        Case Call.TYPE_INCOMING:	color = LCAR.LCAR_Orange 
+					        Case Call.TYPE_MISSED:		color = LCAR.LCAR_Red 
+					        Case Call.TYPE_OUTGOING:	color = LCAR.LCAR_Purple 
+							Case Else: 					color = LCAR.LCAR_LightBlue
+					    End Select
+						'																							0				1					2					 3						4'API.FilterPhoneNumber(
+						SeedSetting2(API.IIF(Call.CachedName.Length = 0, "UNKNOWN",Call.CachedName.ToUpperCase), Call.Id & DEL & Call.Date & DEL & Call.Duration & DEL & Call.Number & DEL & Call.CallType,  API.HowLongAgo(Call.Date), color, -1,WhiteSpace)
+					End If
+				End If
+			Next
+		End If
+	Else
+		If WhiteSpace = LCAR.LCAR_SelectedItem Then WhiteSpace = LCAR.LCAR_GetSelectedItem(3)
+		ListItem=LCAR.LCAR_GetListItem(3, WhiteSpace)
+		text = Regex.Split(DEL,ListItem.Tag)'0=ID, 1=datetime, 2=Duration, 3=number, 4=type
+		NameOfNumber=API.GetPhoneLabel2(text(3)) '=API.GetPhoneLabel( API.GetContactByPhoneNumber(text(3)).Id, text(3))
+		If NameOfNumber.Length>0 Then NameOfNumber = " (" & NameOfNumber.ToUpperCase  & ")"
+		tempstrR = " CALLED ON "
+		Select Case text(4)
+			Case Call.TYPE_OUTGOING
+										tempstrL = "YOU CALLED "
+										tempstrR= " ON "
+			Case Call.TYPE_MISSED:		tempstrL = "YOU MISSED WHEN "
+		End Select
+		LCAR.HideButtonBar(BG)
+		LCAR.LCAR_ClearList(4,0)
+		SetElement18Text(tempstrL & ListItem.text & NameOfNumber & tempstrR & API.GetMonth(DateTime.GetMonth( text(1) ),False) & " " & DateTime.GetDayOfMonth(text(1)) & " AT " & DateTime.Time( text(1) ) & API.iif(text(4) = Call.TYPE_MISSED, "",  " FOR " & API.GetDuration( text(2) )) )
+		LCAR.LCAR_AddListItems(4, LCAR.LCAR_Random,0, Array As String("CALL", "TEXT", "EDIT+CALL", "BACK") )
+	End If
+End Sub
+
+Sub RefreshTextMessages
+	ShowTextMessages(LastSMSID,LastIsPerson)
+End Sub
+
+Sub ShowTextMessages(ID As Int, IsPerson As Boolean) As Boolean 
+	Dim FontName As String, FontFile As String,  Black As String  ,HTMLcode As StringBuilder ,tempstr As String ,Dir As String ,Orange As String ,Purple As String ,Red As String 
+	Dim temp As Int, theSms As Sms, SmsMessages1 As SmsMessages, AlignRight As Boolean, tempContact As Contact 
+	SetElement18Text("LOADING...")
+	LCAR.SeedButtonBar(BG, Array As String("REPLY", "CLEAR", "BACK"))
+	If UMRsection <> 7 Then LastUMRsection=UMRsection
+	UMRsection=7
+	If ID>-1 Then
+		If IsPerson Then
+			theSMSMessages= API.EnumSMSmessages(ID,False)
+		Else
+			theSMSMessages= API.EnumSMSmessagesByThread(ID,False)
+		End If
+		LastSMSID =ID
+		LastIsPerson = IsPerson
+	End If
+	If theSMSMessages.Size=0 Then
+		LCAR.ToastMessage(BG, "NO MESSAGES FOUND",2)
+		ClickBack
+	Else
+		Dir= LCAR.DirDefaultExternal 
+		FontFile = "lcars.ttf"
+		FontName= "LCARS"
+		Black = "#000000"
+		Orange = API.MakeHTMLColor(LCAR.LCAR_Orange)' "#800080"'LCAR_Orange
+		Purple = API.MakeHTMLColor(LCAR.LCAR_Purple)
+		Red = API.MakeHTMLColor(LCAR.LCAR_Red)
+		
+		HTMLcode.Initialize 
+		
+		HTMLcode.Append( "<html><head><style Type='text/css'>" )
+		HTMLcode.Append( CRLF & "@font-face { font-family: " & FontName & ";	src: url('file:///android_asset/" & FontFile & "')" & CRLF & "; }" )
+		HTMLcode.Append( "body {" & CRLF & "	background-color : " & Black & ";" & CRLF & "	COLOR: " & Black & ";" &  CRLF & "	font-family: " & FontName & ";" & CRLF & "	font-size: " & LCAR.Fontsize & "px;" & CRLF & "	text-align: justify;}")
+		
+		temp=95
+		HTMLcode.Append( ".incoming{width:" & temp & "%; border:3px solid " & Orange & "; background:" & Orange & "; border-radius:5px; -webkit-border-radius:5px; font-size: " & LCAR.Fontsize & "px;}")
+		HTMLcode.Append( ".outgoing{width:" & temp & "%; border:3px solid " & Purple & "; background:" & Purple & "; border-radius:5px; -webkit-border-radius:5px; font-size: " & LCAR.Fontsize & "px;}")
+		HTMLcode.Append( ".notsent{width:" & temp & "%; border:3px solid " & Red & "; background:" & Red & "; border-radius:5px; -webkit-border-radius:5px; font-size: " & LCAR.Fontsize & "px;}")
+		
+		HTMLcode.Append( CRLF & "</style></head><meta name=viewport content='width=1200'><meta http-equiv='Content-Type' content='text/html; charset=utf-8' /><body>")
+		'debug("LOADING SMSs")
+		
+		HTMLcode.Append("<SCRIPT LANGUAGE=JAVASCRIPT>window.onload=toBottom; function toBottom(){ window.scrollTo(0,document.body.scrollHeight); } </SCRIPT>")
+		
+		LastContact=""
+		For temp = theSMSMessages.Size-1 To 0 Step -1' 0 To theSMSMessages.Size-1
+			theSms = theSMSMessages.Get(temp)
+			AlignRight=False
+			Select Case (theSms.Type) '  SmsMessages1.TYPE_INBOX'theSms.Type 
+				Case SmsMessages1.TYPE_FAILED,SmsMessages1.TYPE_UNKNOWN :													tempstr="notsent"
+				Case SmsMessages1.TYPE_INBOX:
+																															tempstr="incoming"
+																															AlignRight=True
+				Case SmsMessages1.TYPE_DRAFT ,SmsMessages1.TYPE_OUTBOX,SmsMessages1.TYPE_QUEUED ,SmsMessages1.TYPE_SENT:	tempstr="outgoing"
+			End Select
+			HTMLcode.Append("<P ALIGN=" & API.IIF(AlignRight, "RIGHT", "LEFT") & "><TABLE WIDTH=75% CLASS='" & tempstr & "'><TR><TD>" & API.HowLongAgo(theSms.Date) & "</BR>" & theSms.Body.ToUpperCase & "</TD></TR></TABLE><P>")
+			If LastContact.Length=0 Then LastContact= theSms.Address 'API.FilterPhoneNumber( theSms.Address )
+		Next
+		
+		HTMLcode.Append("</BODY></HTML>" )
+		
+		File.MakeDir(Dir,"HTML")
+		Dir= File.Combine(Dir, "HTML")
+		File.WriteString(Dir, "sms.html", HTMLcode.ToString)
+		BrowseWeb("file://" & File.Combine(Dir, "sms.html"),2)
+		
+		tempContact=API.GetContactByPhoneNumber( LastContact )
+		If tempContact.DisplayName=Null Then
+			SetElement18Text("SMS MESSAGES FOR UNKNOWN")
+		Else
+			SetElement18Text("SMS MESSAGES FOR " & tempContact.DisplayName.ToUpperCase  )
+		End If
+		webview1.Visible=True
+		MoveWebview
+	End If
+End Sub
+Sub SendTextMessage(PhoneNumber As String)
+	Dim tempstr As String ,tempContact As Contact 
+
+	If PhoneNumber.Length>0 Then LastContact=PhoneNumber
+	tempContact = API.GetContactByPhoneNumber(LastContact)
+	If tempContact.displayname = Null Then
+		tempstr= "SMS " & PhoneNumber
+	Else
+		tempstr= "SMS " & tempContact.displayname.touppercase
+	End If
+	HandleCOMMS(-1,-999)
+	LCAR.SelectText("")
+	'HandleAskQuestion(tempstr, "", "", True) 
+	'LCAR.ShowKeyboard(BG,10)
+	'LCAR.ToggleMultiLine(True)
+	
+	LCAR.SymbolsEnabled=True
+	LCAR.LCAR_HideElement(BG, List19,True,False,True)
+	LCAR.LCAR_HideElement(BG, List27,True,False,True)
+	LCARSeffects.frameoffset=0
+	LCAR.ToastMessage(BG, "SEND MAIL TO: " & tempstr, 2)
+	
+	'LCARSeffects.ShowPrompt(BG,-10, tempstr, "" , -1,"OK", "CANCEL")
+	TextPrompt(tempstr, "", -3, "")
+	
+	LCAR.GetElement(LCAR.KBCancelID+5).LOC.currY= LCAR.GetElement(LCARSeffects.PromptID+1).RWidth 
+End Sub
+Sub SendEmail(EmailAddress As String)
+	If EmailAddress.Length=0 Then EmailAddress= GetSelectedEmailAddress
+	CurrentEmailAddress=EmailAddress
+	LCAR.ToastMessage(BG, "SEND MAIL TO: " & CurrentEmailAddress, 2)
+	UMRsection=8
+	TextPrompt("SUBJECT", "", -3, "")
+End Sub
+
+
+
+
+
+
+
+
+
+
+
+Sub HandleEvents(Interval As Int) '
+	Dim Event As ElementClicked,temp As Int 
+	Try
+		If LCAR.GUIcreated Then
+			If Not( MultiCore) AND Interval>-1 Then DrawScreen(Interval)
+			If LCAR.EventList.Size>0 AND Not(LCAR.Locked)  Then
+				Do Until LCAR.EventList.Size=0
+					Event = LCAR.EventList.Get(0)
+					LCAR.EventList.RemoveAt(0)
+					
+					Select Case Event.EventType 
+						
+						Case LCAR.Event_Move
+							Select Case Event.ElementType
+								Case LCAR.LCAR_List 
+									'debug("MOVED: " &  Event.X & "," & Event.Y &  " "  & Event.X2 & "," & Event.Y2)
+							End Select
+						Case LCAR.Event_Scroll 
+							'debug(Event.Index & " moved: " & Event.Index2)
+					
+						Case LCAR.Event_Down 
+							Select Case Event.ElementType
+								Case LCAR.answerscreen
+									'Log("AnswerScreen: " & CurrentSection)
+									'If CurrentSection <> 1 AND STimer.CurrentPhoneState=2 Then ShowUFPlogo
+							
+								Case LCAR.LCAR_ToastDone
+									LCAR.PullNextToast(BG)
+								Case LCAR.LCAR_SMS 
+									If Event.Index2=0 Then
+										If CurrentSection=31 AND UMRsection = 7 Then RefreshTextMessages
+										LCAR.ToastMessage(BG, "TEXT SENT TO " & STimer.CWPhone, 3)
+									Else If Event.Index2=-1 Then
+										LCAR.ToastMessage(BG, "TEXT NOT SENT TO " & STimer.CWPhone & " DUE TO UNKNOWN ERROR", 3)
+									Else
+										LCAR.ToastMessage(BG, "TEXT NOT SENT TO " & STimer.CWPhone & " DUE TO ERROR: " & API.IIFIndex(Event.Index2, Array As String("", "GENERIC FAILURE", "NO SERVICE", "RADIO IS OFF", "NULL PDU")),3)
+									End If
+									
+								Case LCAR.LCAR_HardwareBTN 
+									'If Not( LCAR.LCAR_DpadList(LCAR.VisibleList,  Event.Index))  Then
+									'If lcar.IsKeyboardVisible(BG,-1,False) Then
+										'lcar.LCAR_DpadList(lcar.KBListID,  event.Index)
+									'Else If lcar.IsNumboardVisible Then
+										'lcar.LCAR_DpadList(lcar.NumListID,  event.Index)
+									'Else
+									If CurrentSection <> 7 AND IsSidebarVisble AND (Event.Index=6 OR Event.Index=7) Then
+										LCAR.LCAR_DpadList(List19, API.IIF(Event.Index=6, 0,2))
+									Else
+										Select Case CurrentSection 
+											Case 0,1,3,6'0=intro, 1=wifi chart, 3=sensor meters, 6=navigation scan
+											Case -1'main menu
+												If Event.Index =-1 Then
+													LCAR.pushevent(LCAR.LCAR_Button, 4,   0,0,0,0,0, LCAR.Event_up ) 
+												Else
+													LCAR.LCAR_DpadList(0,  Event.Index)
+												End If
+
+											Case Else'settings
+												If Not( LCAR.LCAR_DpadList(4,  Event.Index) ) Then
+													If Not( LCAR.LCAR_DpadList(3,  Event.Index)) Then
+														LCAR.LCAR_DpadList(LCAR.VisibleList,  Event.Index)
+													End If
+												End If
+										End Select
+									End If
+									'End If
+
+							End Select
+					
+						Case LCAR.Event_up 
+							Select Case Event.ElementType
+								Case LCAR.LCAR_AnswerMade'answer slider
+									API.Broadcast("AnswerMade", Event.Index2)
+									CallsAnswered = Min(5,CallsAnswered + 1)
+									HandleCallAnswer(Event.Index2=1,True )
+								
+								Case LCAR.LCAR_StoppedPlaying
+									Select Case Event.Index 
+										Case 5:ShowModeSelect'my recording
+									End Select
+							
+								Case LCAR.LCAR_OK'button on keyboard
+									Select Case CurrentSection
+
+										Case 31'text messenger
+											HandleCOMMS(-1,-3)
+											
+										Case Else
+											If LCARSeffects.IsPromptVisible(Null) OR LCARSeffects.QuestionAsked Then 
+												LCAR.PushEvent(LCAR.LCAR_Button, LCARSeffects.PromptID+6, 0,0,0,0,0,LCAR.Event_up )
+											End If
+									End Select
+							
+									
+								Case LCAR.LCAR_Keyboard'show=1/hide=-1
+									If Event.Index = 1 AND LCAR.IsListVisible(19) Then HideSideBar
+									'If Not(LCARSeffects.IsPromptVisible(BG)) Then
+										'LCAR.forceshow(Element18, Event.Index=-1 )
+										LCARSeffects.ResizeLeftBar(Event.Index, Event.Index2)
+									'End If
+									Select Case CurrentSection
+										Case -2
+											If Event.Index = -1 Then ShowSettings(True,True)
+											
+										Case 5'memory alpha
+											If LCAR.SmallScreen Then webview1.Visible = (Event.Index=-1)
+											If webview1.Visible Then MoveWebview
+										Case 31
+											HandleCOMMS(-2,Event.Index)
+										
+										'Case Else
+											'MSGBOX1(CurrentSection,UMRsection)
+									End Select
+									If Event.Index=-1 Then LCARSeffects.HidePrompt 
+									
+								
+									
+								Case LCAR.LCAR_StoppedMoving
+									Select Case Event.Index 
+										Case 1
+											ShowModeSelect
+											
+										Case 2: ShowModeSelect'opening is now done
+										Case 3,4,5,6: NextStage(5+Event.Index,10+Event.Index)' frame animation stage 1, elbows and top square now visible, reveal small squares 8 and 13	
+										Case 7 'end showframe
+											If LCAR.redalert Then LCAR.ResetRedAlert
+											LCAR.Stage=9
+										Case 8'end showmodeselect
+											'lcar.Stage=8
+											'lcar.LCAR_HideElement(bg,4, False, True)
+										Case 10'showkeyboard
+
+										Case 12'Prompt
+									End Select
+									
+
+									
+								Case LCAR.LCAR_CodeChanged 'toggled red alert 1=red alert 0=condition green
+									Select Case CurrentSection
+										Case Else
+											If Event.Index = 1 Then LCAR.PlaySound(0, False)
+									End Select
+									
+								Case LCAR.LCAR_TimerIncrement	
+									'event.index= index of timer, event.index2=time remaining
+									Select Case Event.Index 
+										Case -1'high resolution timer
+											Select Case CurrentSection
+
+											End Select
+										Case 0'current call
+											If STimer.CurrentPhoneState=1 Then
+												LCAR.LCAR_SetElementText(ElementBigText, CallTime,"")
+											End If
+										Case 1'
+											If Event.index2 =0 Then GotoSleep
+									End Select
+								
+
+								
+								Case LCAR.LCAR_List'-1
+									Select Case Event.Index
+										Case 0'selection
+										'Case 1'wifi
+											'MSGBOX1( Event.Index2, "WIFI")
+											LCAR.HideToast
+											If Event.Index2 = SelectedSection Then ShowSection(TranslateSection(Event.Index2),False)
+											SelectedSection=Event.Index2
+										
+										
+										Case 3'settings
+											HandleSettings(Event.Index2,3)
+											
+										Case 4'options
+											HandleSettings(Event.Index2,4)
+											
+										
+										Case LCAR.KBListID '6
+											LCAR.HideToast 
+											If Event.Index2>-1 Then LCAR.HandleKeyboard( LCAR.LCAR_GetListItem(Event.Index, Event.Index2).Number )
+										
+											
+										Case List16'History
+											HistoryList(Event.Index2)
+											
+
+										
+										Case List19' sidebar
+											HandleSidebar(Event.Index2)
+
+										Case List27
+											HandleCOMMS(List27,Event.Index2)
+										
+										Case LCAR.ButtonList
+											HandleButtonList(Event.Index2)
+										
+										Case Else
+											'MSGBOX1("Element Clicked: " &  lcar.LCAR_GetListItem(event.Index, event.Index2).Text  , "List: " & event.Index & " Item: " & event.Index2 )
+											SetElement18Text(LCAR.LCAR_GetListItem(Event.Index, Event.Index2).Text)
+											'lcar.forceshow(18,True)
+											'lcar.LCAR_SetElementText( 18, lcar.LCAR_GetListItem(event.Index, event.Index2).Text, "")
+									End Select
+									PlayRandomBeep
+								
+								Case LCAR.LCAR_Elbow 
+									Select Case Event.Index 
+										Case LCAR.KBCancelID 'Cancel
+											LCAR.ClickedOK=True=False
+											LCAR.HideKeyboard(BG,10)
+										Case LCAR.KBCancelID+4': lcar.HandleKeyboard(KeyCodes.KEYCODE_DPAD_CENTER)'OK
+											LCAR.ClickedOK=True
+											LCAR.HideKeyboard(BG,10)
+											LCAR.PushEvent(LCAR.LCAR_OK, LCAR.KBCancelID+5,0,0,0,0,0,0)
+					
+										
+										Case Element04'SelectMode HELP
+											ShowSection(TranslateSection(LCAR.LCAR_GetSelectedItem(0)), True)
+											
+
+									End Select
+									PlayRandomBeep
+
+									
+								Case LCAR.LCAR_Button
+									Select Case Event.Index 
+										Case LCARSeffects.FrameElement
+											Activity_KeyPress(84)
+										Case LCARSeffects.FrameElement + 11
+											CurrentSection=2
+											CurrentSettingsSection=1
+											ShowSettings(True,False)
+											MailParser.CheckEmail 
+									
+										Case LCARSeffects.PromptID+5, LCARSeffects.PromptID+6' Yes, No
+											If LCAR.LCAR_GetElement(LCARSeffects.PromptID+4).SideText.Length>0 Then
+												LCAR.HideToast
+												LCAR.ToastMessage(BG, "PLEASE FINISH READING", 2)
+												LCAR.PlaySound(0,False)
+											Else
+												Event.Index2 = Abs( Event.Index - LCARSeffects.PromptID-6)'0=no/right, 1=yes/left
+												LCAR.HideGroup(LCARSeffects.PromptGroup, False,True)
+												'MSGBOX1(LCAR.GetSelectedText, LCARSeffects.PromptQID)
+												Select Case LCARSeffects.PromptQID 
+													Case -2
+														ExitApplication
+													Case -1
+														ShowModeSelect
+		
+													'Case 9
+														'MSGBOX1(LCAR.GetSelectedText, LastContact)
+														HandleSettings(Event.Index2, -1)
+													
+													Case 3
+														CurrentSection=31
+														UMRsection=9
+														HandleCOMMS(-2,-1)
+														
+													Case Else
+														MSGBOX1("TEXT: " & LCAR.GetSelectedText,"Unhandled question: " & LCARSeffects.PromptQID )
+												End Select
+											End If
+											LCARSeffects.HidePrompt
+									
+										Case LCAR.KBCancelID+1: LCAR.HandleKeyboard(KeyCodes.KEYCODE_DEL) 'Backspace
+										Case LCAR.KBCancelID+2: LCAR.HandleKeyboard(KeyCodes.KEYCODE_SPACE) 'Space
+										Case LCAR.KBCancelID+3: LCAR.HandleKeyboard(KeyCodes.KEYCODE_UNKNOWN)'Delete
+										
+										Case LCAR.NumButtonID+1: LCAR.HandleNumboard(BG, KeyCodes.KEYCODE_DEL, ServerIP, Settings) 'backspace
+										Case LCAR.NumButtonID+2: LCAR.HandleNumboard(BG, KeyCodes.KEYCODE_UNKNOWN, ServerIP, Settings)'Delete
+										Case LCAR.NumButtonID+3: LCAR.DeleteIP(LCAR.SelectedIP,Settings) 'lcar.HandleNumboard(BG,"DELETE IP", serverIP, Settings)'Delete IP
+										
+										Case LCAR.NumButtonID+5:LCAR.HandleNumboard(BG,"PREV", ServerIP, Settings)'Prev octet
+										Case LCAR.NumButtonID+6:LCAR.HandleNumboard(BG,"NEXT", ServerIP, Settings)'Next octet
+										Case LCAR.NumButtonID+7: LCAR.SaveIP( ServerIP , Settings)' lcar.HandleNumboard(BG,"SAVE IP", serverIP, Settings)'Save IP
+										
+										Case LCARSeffects.FrameElement+11'left sidebar button
+											Select Case CurrentSection
+												Case -1'mode select
+													ShowSection(TranslateSection(LCAR.LCAR_GetSelectedItem(0)), False)
+												Case 5'web browser
+													HistoryList(-1)
+												'Case 8 'tactical test
+													'AddGPScoordinate(API.CreateLocation( LCARSeffects.GetGPScoordinate(0), 0, 50))
+
+
+												Case Else 
+													ShowModeSelect
+											End Select
+										
+										
+										
+										Case Element88
+											ShowSection(TranslateSection(LCAR.LCAR_GetSelectedItem(0)), Event.Index2=1)
+											
+										
+									End Select
+									PlayRandomBeep
+									
+								Case LCAR.LCAR_Textbox
+								Case LCAR.LCAR_Slider
+								
+								'Case LCAR.LCAR_TextButton
+									
+							End Select
+					End Select
+					'lcar.LCAR_AddListItem(0,  "Clicked: " & lcar.ClickedType(Event) &  " - " & event.X2  ,   lcar.LCAR_RandomColor,  event.Index , "", False,  event.X & "," & event.y,  0,False)
+				Loop
+			End If
+		Else
+			HandleGUInotCreated("HandleEvents1")
+		End If	
+	Catch
+		HandleGUInotCreated("HandleEvents2")
+	End Try
+End Sub
+
+
+Sub AltAnswerMethod 
+	Dim Testing As Technis, HeadsetIsPluggedIn As Boolean = STimer.HeadsetIsPluggedIn  'keyg As MediaController
+	If Not(HeadsetIsPluggedIn) Then Testing.HeadsetEvent(1)
+		'keyg.MediaButton(KeyCodes.KEYCODE_HEADSETHOOK)
+		API.SendMediaButton(KeyCodes.KEYCODE_HEADSETHOOK)
+	If Not(HeadsetIsPluggedIn) Then Testing.HeadsetEvent(0)
+End Sub
+
+Sub HandleCallAnswer(DidAnswer As Boolean,WasUser As Boolean )
+	Dim IsRinging As Boolean ,Action As String 
+	IsRinging= STimer.AC.IsRinging
+	
+	'If IsRinging OR (Not(DidAnswer) AND STimer.CurrentPhoneState=1) Then Action="Attempting to " & API.IIF(DidAnswer, "answer", "hang up")
+	'MSGBOX1("IsRinging: " & IsRinging & CRLF & "DidAnswer: " & DidAnswer & "CurrentPhoneState: " & STimer.CurrentPhoneState & CRLF & "WasUser: " & WasUser,Action)
+	
+	'debug(IsRinging & " " & DidAnswer & " " & STimer.CurrentPhoneState)
+	If CONTACTINFO = "*1*" Then
+		If DidAnswer Then
+			LCAR.playsoundanyway(5)
+		Else
+			CurrentSettingsSection=0
+			ShowSettings(True,False)
+		End If
+	Else If IsRinging OR (Not(DidAnswer) AND STimer.CurrentPhoneState=1) Then
+		If DidAnswer Then
+			
+			If API.AltMethod OR API.APIlevel>=21 Then
+				AltAnswerMethod
+				'keyg.keygenerator(KeyCodes.KEYCODE_HEADSETHOOK)
+			Else
+				STimer.AC.AnswerPhone
+			End If
+			CurrentTime =DateTime.Now 
+			API.NewTimer("Main", 0, STimer.Infinite )
+			'ShowUFPlogo
+		Else
+			HangUpCall
+			If WasUser Then
+				If IsRinging Then
+					CurrentSettingsSection=0
+					ShowSettings(True,False)
+				End If
+			Else
+				GotoSleep
+			End If
+		End If
+		STimer.DidAnswer=True
+		STimer.ResponseWas=DidAnswer
+	End If
+End Sub
+Sub HangUpCall 
+	API.KillCall 
+	STimer.AC.HookUpPhone 
+End Sub
+
+
+
+Sub HistoryList(Index As Int)As Boolean 
+	Dim Item As LCARlistitem 
+	If Index =0 Then'CLEAR
+		ClearHistory(List16, "History",  "CLEAR HISTORY")
+	Else If Index=-1 Then
+		If LCAR.IsKeyboardVisible(BG, 0, False)  Then
+			'LCAR.PlaySound(8, False)
+		Else If API.IsConnected Then
+			webview1.Visible = Not(webview1.Visible)
+			If Not(webview1.Visible) Then
+				LCAR.LCAR_HideElement(BG, List16,True , True, True)
+				LCAR.RandomizeColors(List16)
+				Return True
+			Else
+				If webview1.Visible Then MoveWebview
+			End If
+		Else
+			LCAR.SetRedAlert(False)
+			CurrentSection=-999
+			ShowModeSelect
+			Return False
+		End If
+	Else
+		Item = LCAR.LCAR_GetListItem(List16, Index)
+		If Item.IsInitialized Then
+			API.Title = Item.Text.ToUpperCase 
+			API.FileLoaded= Item.Tag 
+			API.BaseHref= GetBaseHREF("History", Item.Number)
+			needsreloading=True
+		Else
+			Return False
+		End If
+	End If
+	LCAR.LCAR_HideElement(BG, List16,True,False,True)
+	Return True
+End Sub
+Sub IsSidebarVisble As Boolean 
+	Return LCAR.IsListVisible(List19)
+End Sub
+
+
+
+
+Sub SwapMode(ElementID As Int , Stage As Int) As Int
+	If CurrentSection=10 Then 	LCAR.SwapMode(ElementID,Stage,True)
+End Sub
+
+
+
+
+
+
+
+
+
+
+Sub ResizeSetting(Items As Int)
+	Dim temp As Int, Width As Int = 100, Y As Int = 200
+	If LCAR.SmallScreen Then Width = 50
+	If LCAR.CrazyRez>0 Then 
+		Width=Width*LCAR.CrazyRez
+		Y = LCAR.GetScaledPosition(3,False)
+	End If
+	
+	If LCAR.GUIcreated Then
+		If Items=-999 AND Not(LCAR.SmallScreen) Then
+			'temp=(Activity.Width- API.IIF(LCAR.SmallScreen, 54,104))* 0.33
+			LCAR.LCAR_HideElement(BG,4,True,False,True)
+			'If LCAR.SmallScreen Then
+			'	LCAR.resizeList(3, 0,0, temp, 54,100,True)
+			temp=(Activity.Width-(Width+4))* 0.33
+			LCAR.resizeList(3, 0,0, temp, 0,0,False)
+		Else
+			Items = LCAR.GetListItemCount(List19)
+			If CurrentSection = 23 Then Items=1
+			If LCAR.SmallScreen Then
+				temp=(Activity.Width-Width-4)* 0.33 'temp=(Activity.Width-54)* 0.33
+				LCAR.resizeList(3, 0,0, temp, Width+4,100,True)
+				LCAR.resizeList(4, 0,0,-1, Width+4,100,True)
+			Else
+				temp=(Activity.Width-(Width+4))* 0.33
+				'temp=(Activity.Width-100-(LCAR.ChartSpace*2))* 0.25
+				'LCAR.resizeList(3,  temp*3,-1, temp,0,0,False )
+				If LCAR.IsListVisible(4) AND Items>0 Then
+					LCAR.resizeList(3, -temp,-1, 0,0,0,False )
+				Else
+					LCAR.resizeList(3, -1,-1, temp,0,0,False )
+				End If
+				LCAR.resizeList(4, -1, -1, -1, -temp, 200,True) '100+LCAR.ChartSpace+ (temp*2), 200,  True )
+			End If
+			If CurrentSection = 23 Then 
+				LCARSeffects.frameoffset=0
+			Else
+				LCARSeffects.frameoffset=LCAR.ListItemsHeight(Abs(Items))
+			End If
+			LCAR.ResizeList(List19, Width+3, LCARSeffects.frameoffset, -1,0,0,False)
+		'ShowFrame(False,True)
+		End If
+		LCARSeffects.MoveListY(3)
+		LCARSeffects.MoveListY(4)
+	Else
+		HandleGUInotCreated("ResizeSetting")
+	End If
+End Sub
+
+Sub BrowseMySite(Page As String)
+	Dim URL As String 
+	LCAR.SymbolsEnabled=True
+	URL=MyURL & "lcars"	
+	If Page.Length=0 Then 
+		BrowseWeb(URL,0)'About 
+	Else
+		BrowseWeb(URL & "/" & Page,0)
+	End If
+End Sub
+
+
+
+Sub HandleAskQuestion(Title As String, Text As String, Default As String, MultiLine As Boolean)As Boolean 
+	'lcar.ForceHideAll 
+	'QuestionAsked=True
+	
+	LCAR.SelectText(Default)
+	LCAR.SymbolsEnabled=True
+	If MultiLine Then LCAR.ToggleMultiLine(True)
+	LCARSeffects.ShowPrompt(BG,-10, Title, Text, API.iif(MultiLine,-9,9),"OK", "CANCEL")
+	LCAR.ToastMessage(BG, "PRESS THE BACK BUTTON TO TOGGLE CAPS LOCK", 2)
+End Sub
+Sub HandleSettings(Index As Int, ListID As Int)
+	Dim SettingID As Double ,Value As Boolean , tempitem As LCARlistitem , ShowList As Boolean ,tempstr As String 
+	If CurrentSettingsSection>=0 Then'above 0, this is the settings section
+		SettingID=CurrentSettingsSection + (Index /10)
+		ShowList=True
+	Else
+		Select Case CurrentSettingsSection
+			Case -11,-12,-13,-14,-15,-16'these items can still have a side bar
+			Case Else:	HideSideBar'these items cannot
+		End Select
+		'MSGBOX1(CurrentSection,"SECTION")
+		Select Case CurrentSettingsSection
+			Case -2, -3, -5, -12, -13, -15, -16,0,1'show only currsection, not index of item. Add at ShowSettings too
+				SettingID=CurrentSettingsSection
+			Case Else'current section.index of item
+				If Index<10 Then
+					SettingID=CurrentSettingsSection - (Index /10)
+				Else If Index=10 Then
+					SettingID=CurrentSettingsSection - 0.01
+				Else
+					SettingID=CurrentSettingsSection - (Index /100)
+				End If
+		End Select
+		Select Case CurrentSettingsSection'these sections below 0 can show the sub list
+			Case -10,-11,1:	ShowList=True
+		End Select
+	End If
+	'MSGBOX1(SettingID, "SettingID")
+	If ListID =3 Then
+		LCAR.LCAR_ClearList (4,0)
+		'lcar.forceshow(18,True)
+		'lcar.LCAR_SetElementText( 18, lcar.LCAR_GetListItem(event.Index, event.Index2).Tag, "")
+		If Index>-1 Then
+			tempitem=LCAR.LCAR_GetListItem(ListID, Index)
+			Select Case CurrentSettingsSection 
+				Case 1:SettingID=1					
+				Case -16'dont show the tag for these items
+				Case Else: SetElement18Text(tempitem.Tag)
+			End Select
+			'AA,Mute,UseMic
+			SelectedSetting=SettingID
+			SettingIndex=Index
+			Select Case SettingID
+				Case 0'sent an SMS reply
+					'If Msgbox2(LCAR.LCAR_GetListItem(3,SettingIndex).Text,CONTACTINFO,"YES", "NO", "", Null) = DialogResponse.POSITIVE Then
+						API.SendTextMessage(CONTACTINFO, LCAR.LCAR_GetListItem(3,SettingIndex).Text,True)
+					'End If
+					'MSGBOX1(LCAR.LCAR_GetListItem(3,SettingIndex).Text,CONTACTINFO)
+					ShowModeSelect
+					ShowList=False
+					DonotClose=False
+					GotoSleep
+					
+				Case -16'communicator
+					ShowList=HandleCOMMS(3,Index)
+				
+				Case 1
+					LCAR.LCAR_AddListItems(4, LCAR.LCAR_Random,0, Array As String("READ", "DELETE", "REPLY"))
+					If tempitem.ColorID <> LCAR.LCAR_Red Then LCAR.LCAR_AddListItems(4, LCAR.LCAR_Random,0, Array As String("UNREAD"))
+					LCAR.LCAR_AddListItems(4, LCAR.LCAR_Random,0, Array As String("BACK"))
+					SetElement18Text(tempitem.Tag)
+				
+				Case Else: 							
+					LCAR.LCAR_AddListItems(4, LCAR.LCAR_Random,0, Array As String(BoolToText(True), BoolToText(False)) )'boolean values
+			End Select
+			If ShowList Then
+				LCAR.LCAR_FindListItem(4, tempitem.Side, 0,False,-2)
+				ShowSideList(Index)
+			End If
+		End If
+	Else If ListID = 4 Then
+		If Index>-1 Then
+			Value=Index=0
+			Select Case SelectedSetting
+				Case -16,1
+				Case Else:	LCAR.LCAR_SetListitemText(3, SettingIndex, LCAR.LCAR_IGNORE, LCAR.LCAR_GetListitemText(4,Index,0))
+			End Select
+			Select Case SelectedSetting			
+				Case -16
+					ShowList=HandleCOMMS(4,Index)
+				Case 1
+					tempitem = LCAR.LCAR_GetListItem(4,Index)
+					SettingID = LCAR.LCAR_GetSelectedItem(3)
+					tempstr=LCAR.LCAR_GetListitemText(3,-1,0)
+					Select Case tempitem.Text
+						Case "BACK"':HideSubSettings
+						Case "UNREAD": 
+							If MailParser.MarkThreadAsRead(tempstr,False) Then	LCAR.LCAR_GetListItem(3,SettingID).ColorID=LCAR.LCAR_Red 
+						Case "DELETE"
+							If MailParser.DeleteThread(tempstr) Then LCAR.LCAR_RemoveListitem(3, SettingID)
+							SetElement18Text("")
+						Case "READ"	
+							'SetElement18Text(tempstr)
+							tempstr=API.MakeHTML(MailParser.TempInboxAction(tempstr,2))
+							'LCAR.SeedButtonBar(BG, Array As String("UNREAD", "REPLY", "DELETE"))
+							lastURL= tempstr & API.aHREF 
+							needsreloading = True
+							MoveWebview
+							'webview1.Visible=True
+						Case "REPLY"
+							ReplyTo(tempstr)
+							Return
+						Case Else'unrecognized
+							betterMSGBOX(tempitem.Text, LCAR.LCAR_GetListitemText(3,-1,0), False, "", "OK", "","")
+							'MSGBOX1(tempitem.Text, LCAR.LCAR_GetListitemText(3,-1,0) )
+					End Select
+					HideSubSettings
+			End Select
+			LoadSettings(True)
+			If LCAR.SmallScreen AND Index>-1 AND ShowList Then
+				LCAR.LCAR_HideElement(BG,4,True,False,True)
+				LCAR.LCAR_HideElement(BG,3,True,True,True)
+			End If
+		End If
+	Else
+		'QuestionAsked=False
+		If Index=0 Then
+			Select Case SelectedSetting	
+				
+			End Select
+		End If
+		'ShowSection(32,False)
+		ShowSettings(True,True)
+	End If
+End Sub
+
+Sub ReplyTo(Subject As String)
+	CurrentEmailAddress=MailParser.EnumFrom(Subject,True)
+	If CurrentEmailAddress.Length=0 Then CurrentEmailAddress= STimer.EmailAddress
+	If Subject.Trim.ToLowerCase.StartsWith("re:") Then 
+		CurrentSubject = MailParser.FindProperSubject(Subject)
+	Else
+		CurrentSubject = "Re: " & MailParser.FindProperSubject(Subject)
+	End If
+	UMRsection=9
+	TextPrompt("BODY", "", -3, "")
+	LCAR.ToastMessage(BG, "SEND MAIL TO: " & CurrentEmailAddress, 2)
+	LCAR.ToastMessage(BG, "SUBJECT: " & CurrentSubject, 2)
+End Sub
+
+Sub ActivityFinish 
+	Log("Program Terminated")
+	Activity.Finish 
+	API.NewTimer("TurnOff",1, 1)
+End Sub
+
+Sub GotoSleep
+	ShowModeSelect
+	CanClose=True
+	HandleClose
+	If Not(DonotClose) AND Not(API.IsInIDE) Then ActivityFinish 
+End Sub
+Sub ShowSection12(TheSection As Int)
+	CurrentSettingsSection = -TheSection
+	ShowSettings(False,True )
+End Sub
+Sub ShowSideList(Index As Int)
+	LCAR.LCAR_HideElement(BG,4,True,True,True)
+	If LCAR.SmallScreen  AND Index>-1 Then 
+		LCAR.LCAR_HideElement(BG,3,True,False,True)
+	Else
+		
+		'debug("RESIZESETTING: " & LCAR.GetListItemCount(19))
+		ResizeSetting(4)
+		'ResizeSetting(4)
+	End If
+End Sub
+Sub DeclinedCall
+	CurrentSettingsSection=0
+	ShowSettings(True,False)
+End Sub
+Sub ShowSettings(doFrame As Boolean, AllowGame As Boolean )
+	Dim temp As Int ,temp2 As Int
+	LCAR.stage=9
+	LCAR.ForceHideAll(BG)
+	If AllowGame Then
+		Select Case CurrentSettingsSection
+			Case Else:	HideSideBar
+		End Select
+	Else 
+		If	CurrentSettingsSection<0 OR CurrentSettingsSection>3 Then CurrentSettingsSection=0
+		CurrentSection=-2
+	End If
+	
+	
+	LCAR.LCAR_SetElementText(LCARSeffects.FrameElement, "", "")
+	LCAR.LCAR_SetElementText(LCARSeffects.FrameElement+11, "", "")
+	
+	If doFrame  Then 
+		LCAR.LCAR_HideAll(Null,False)' hideall
+		webview1.Visible = False
+		'If AllowGame Then 
+			HideSideBar
+			ShowFrame(doFrame,True)
+		'Else
+			'MSGBOX1("ShowSettings", "SEEDSIDEBAR")
+			'SeedSideBar (Array As String("GUI", "SND", "ACT", "MISC"), True,True )
+		'End If
+		'LCARSeffects.frameoffset=LCAR.ListItemsHeight(4)
+		'ShowFrame(True,True)
+		'LCAR.ResizeList(19, API.IIF(LCAR.SmallScreen, 53,103), LCARSeffects.frameoffset, -1,0,0,False)
+		
+		If CurrentSettingsSection=1 Then
+			SetupSidebar
+		End If
+	End If
+	
+	LCAR.RandomizeColors(3)
+	'LCAR.RandomizeColors(19)
+	LCAR.LCAR_HideElement(BG, 3,True,True,False)
+	'LCAR.LCAR_HideElement(BG, 19,True,True,False)
+
+	'If Not(LCAR.smallscreen) Then LCAR.LCAR_HideElement(BG, 4,True,True,False)
+	LCAR.LCAR_HideElement(BG, 4,True, False, True)
+	
+	ResizeSetting(API.iif(AllowGame,temp,4))
+	
+	LCAR.LCAR_ClearList(3,0)
+	Select Case CurrentSettingsSection	
+		Case 0'GUI
+			SetElement18Text("SELECT AN SMS QUICK-REPLY")
+			LCAR.SeedButtonBar(BG, Array As String("CANCEL"))
+			If SMSQuickReply(3,"",-1)=0 Then 
+				ShowModeSelect
+				Log("No responses on file")
+				GotoSleep
+			Else
+				DonotClose=True
+				API.NewTimer("TurnOff",1,AutoTurnOff)
+			End If
+			
+		Case 1'EMAIL
+			If API.ListSize(MailParser.TempMailBox) = 0 Then MailParser.TempMailBox = MailParser.EnumThreads 
+			For temp = 0 To Min(MailParser.TempMailBox.Size-1 ,50)
+				temp2=temp2+ SeedMail( MailParser.TempMailBox.Get(temp) ) 
+			Next
+			SetElement18Text("YOU HAVE " & temp2 & " UNREAD MESSAGE" & API.IIF(temp2=1,"","S"))
+	End Select
+End Sub
+
+Sub SetupSidebar
+	SeedSideBar(Array As String("PPL", "DIAL", "LOGS", "SMS"), True,True)
+	LCAR.LCAR_SetElementText(LCARSeffects.FrameElement, API.IIF(LCAR.SmallScreen, "SRCH", "SEARCH"), "")
+	LCAR.LCAR_SetElementText(LCARSeffects.FrameElement+11, API.IIF(LCAR.SmallScreen, "MAIL", "EMAIL"), "")
+End Sub
+
+Sub SeedMail(tempMail As MailThread)As Int 
+	Dim ColorID As Int,HowLongAgo As String ,Tag As String 
+	ColorID=API.IIF(tempMail.IsRead, LCAR.LCAR_Orange, LCAR.LCAR_Red)
+	HowLongAgo=API.HowLongAgo(tempMail.date)
+	Tag=HowLongAgo & " • " & tempMail.Subject & API.IIF(tempMail.Attachments=0,""," • " & tempMail.Attachments & " FILES") & " • " & tempMail.From
+	SeedSetting2(tempMail.Subject, Tag, HowLongAgo  , ColorID , -1, API.IIF(tempMail.Attachments=0,0,10))
+	Return API.iif(tempMail.IsRead, 0,1)
+End Sub
+
+Sub SeedSetting(Name As String, Description As String, CurrentValue As String)
+	LCAR.LCAR_AddListItem(3, Name, LCAR.LCAR_Random, -1, Description, False, CurrentValue,0,False,-1)
+End Sub
+Sub SeedSetting2(Name As String, Tag As String, SideText As String, Color As Int, Number As Int, WhiteSpace As Int)
+	LCAR.LCAR_AddListItem(3, Name.ToUpperCase, Color, Number, Tag, False, SideText,WhiteSpace,False,-1)
+End Sub
+
+
+Sub TimerIncrement(tTimer As LCARtimer)
+	'debug(tTimer)
+	LCAR.PushEvent(LCAR.LCAR_TimerIncrement , tTimer.id, tTimer.Duration ,tTimer.Index ,0,0,0,0)
+	If Not(LCAR.ScreenIsOn ) Then HandleEvents(-1)
+End Sub
+
+Sub Timermain_Tick
+	'webview resizing
+	Dim CurrSecond As Long 
+	Try
+		If LCAR.ScreenIsOn  Then
+			If LCAR.GUIcreated Then
+			'If LCAR.LCARelements.Size>0 Then
+				If LCAR.WebviewOffset <>0 AND webview1.Visible Then'LCARSpeed	
+					If LCAR.WebviewOffset<0 Then
+						If LCAR.WebviewOffset<= -LCARSpeed Then
+							LCAR.WebviewOffset=LCAR.WebviewOffset+LCARSpeed
+							webview1.Height=webview1.Height-LCARSpeed
+						Else
+							webview1.Height=Activity.Height- webview1.Top -LCAR.KeyboardHeight -4' webview1.Height-lcar.WebviewOffset
+							LCAR.WebviewOffset=0
+						End If
+					Else
+						If LCAR.WebviewOffset>= LCARSpeed Then
+							LCAR.WebviewOffset=LCAR.WebviewOffset-LCARSpeed
+							webview1.Height=webview1.Height+LCARSpeed
+						Else
+							webview1.Height=Activity.Height - webview1.Top 'webview1.Height+lcar.WebviewOffset
+							LCAR.WebviewOffset=0
+						End If
+					End If
+				End If
+
+				'TimerBlink=TimerBlink+TimerMain.Interval 
+				CurrSecond = Floor(DateTime.Now / LCAR.VolInc ) 'DateTime.GetSecond(DateTime.Now)
+				If TimerBlink <> CurrSecond Then
+					
+				'If TimerBlink>60 Then'=100 Then
+					LCAR.DirtyElement(LCAR.KBCancelID+5)
+					
+					Select Case CurrentSection
+
+					End Select
+
+					LCAR.LCAR_BlinkLCARs 
+					TimerBlink=CurrSecond
+				End If
+				
+				If needsreloading Then
+					webview1.Visible = True
+					MoveWebview
+					webview1.LoadUrl ( lastURL)
+					needsreloading=False	
+				End If
+				
+				HandleEvents(5)'TimerMain.Interval)
+			Else
+				HandleGUInotCreated("Timermain_Tick1")
+			End If
+		End If
+	Catch
+		HandleGUInotCreated("Timermain_Tick2")
+	End Try
+End Sub
+
+Sub INITBG
+	Try
+		If Not(LCAR.BGisInit) Then
+			BG.Initialize(Activity)
+			LCAR.BGisInit=True
+		End If
+	Catch
+		LCAR.BGisInit=False
+	End Try
+End Sub
+
+Sub DrawScreen(Interval As Int)
+	Try
+		INITBG	
+		If LCAR.NeedsClearing Then LCAR.ClearScreen(BG)
+		If NeedsShowFrame Then
+			ShowFrame(False,LCARSeffects.NeedsLeftBar)
+			NeedsShowFrame=False
+			LCAR.IsKeyboardVisible(BG, 10,False )
+		End If
+		If Interval> 0 Then LCAR.IncrementLCARs(LCARSpeed , 1,Interval )
+		If LCAR.DrawLCARs(BG, 0) Then 	Activity.Invalidate 
+		DoubleCheck
+	Catch
+		HandleGUInotCreated("DrawScreen")
+	End Try
+End Sub
+
+Sub UrlDone(URL As String)
+	Log(URL & " done")
+End Sub
+
+
+
+Sub DoubleCheck 
+	If CurrentSection=1 AND LCAR.LCARSDrawn =0 Then
+		'API.debugMode=True
+		ShowUFPlogo 
+	End If
+End Sub
+
+
+
+
+
+ 
+
+
+
+
+Sub SMSQuickReply(ListID As Int, Text As String, Index As Int) As Int 
+	Dim temp As Int, Count As Int
+	Count = Settings.GetDefault("SMSQR", 0)
+	If Index=-1 OR Index >= Count Then
+		If Text.Length=0 Then'enumerate
+			LCAR.LCAR_ClearList(ListID,0)
+			For temp = 0 To Count-1
+				LCAR.LCAR_AddListItem(ListID, Settings.Get("SMSQR" & temp), LCAR.LCAR_Random, -1, "", False, "", 0,False,-1)
+			Next
+		Else'add
+			Settings.Put("SMSQR" & Count,Text)
+			Settings.Put("SMSQR", Count+1)
+			Return Count+1
+		End If
+	Else
+		Settings.Put("SMSQR" & Index, Text)
+	End If
+	Return Count
+End Sub
+
+
+
+
+
+
+
+
+
+
+
+
+
+'Sub InitTTS 
+'	If Not( TTS1.IsInitialized) OR Not(TTSisReady) Then TTS1.Initialize("TTS1")
+'End Sub
+'Sub Speak(Text As String)
+'	'debug(API.IIF(SpeakName, "DO", "DON'T") & " SAY: " & Text)
+'	STimer.StartedTalking=DateTime.Now 
+'	Try
+'		If SpeakName Then
+'			If TTS1.IsInitialized AND TTSisReady Then
+'				TTS1.Speak(Text, True)
+'				Log(TTS1.IsInitialized  & " SPEAKING " & Text)
+'			End If
+'		End If
+'	Catch
+'		Log("TTS FAILED: " & LastException.Message)
+'		SpeakText=Text
+'		InitTTS
+'	End Try
+'End Sub
+'
+'Sub InitTTS(State As Boolean)
+'	Log("INITTTS: " & State & " " & TTSisInitializing & " " & TTSisReady)
+'	If State Then
+'		If Not(TTSisInitializing) OR Not(TTSisReady) Then 
+'			If Not( TTS1.IsInitialized) Then
+'				Log("Init TTS engine")
+'				TTS1.InitializeTTs("TTS1","en")' TTS1.Initialize("TTS1")
+'				TTSisInitializing=True
+'			Else
+'				Speak(SpeakText)
+'			End If
+'		End If
+'	Else If TTS1.IsInitialized Then
+'		TTS1.ShutDown 
+'		TTSisInitializing=False
+'		TTSisReady=False
+'	End If
+'End Sub
+'
+'Sub Speak(Text As String)
+'	Dim Error As Boolean 
+'	If TTS1.IsInitialized  Then
+'		Try
+'			Log(SpeakName & " Say: " & Text)
+'			If SpeakName AND Text.Length>0 Then 
+'				LCAR.Stop 
+'				TTS1.Speaking(Text)
+'			End If
+'		Catch
+'			Error=True
+'		End Try
+'	Else
+'		Error=True
+'	End If
+'	If Error AND SpeakName Then
+'		TTSisReady=False
+'		TTSisInitializing=False
+'		Log("TTS ERROR")
+'		If LastException.IsInitialized Then Log(LastException.Message)
+'		SpeakText=Text
+'		InitTTS(True)
+'	End If
+'End Sub
+'Sub StopSpeaking(Delay As Int)
+'	If TTS1.IsInitialized Then
+'		If Delay=0 Then
+'			TTS1.StopToSpeak 
+'		Else
+'			TTS1.PlaySilence(Delay)
+'		End If
+'	End If
+'End Sub
+'
+'Sub TTS1_Ready (Success As Boolean)
+'	MSGBOX1(Success,"TTS1_Ready")
+'	Log("TTS " & API.IIF(Success, "IS", "IS NOT") & " READY (" & SpeakText & ")")
+'	TTSisInitializing=False
+'	TTSisReady=Success
+'	If Success AND SpeakText.Length>0 Then Speak(SpeakText)
+'	SpeakText=""
+'End Sub
+
+
+
+Sub InitTTS(State As Boolean)
+	If State AND Not(TTS1.IsInitialized) Then TTS1.InitializeTTs("tts","en")
+End Sub
+Sub Speak(Text As String)
+	If SpeakName Then 
+		If TTS1.IsInitialized Then
+			If Not(TTS1.IsSpeaking) Then TTS1.Speaking(Text)
+		Else
+			SpeakText=Text
+		End If
+	End If
+End Sub
+
+Sub tts_Ready (Success As Boolean)
+	If Success AND SpeakText.Length>0  Then 
+		Speak(SpeakText)
+		SpeakText=""
+	End If
+End Sub
+
+
+
+
+Sub GetScalemodeFlt As Float
+	Return LCAR.GetScalemode 
+End Sub
