@@ -290,10 +290,6 @@ Sub SetupVariables
 
 	MaxSearchCycles=50
 	CustomLevel=5
-	
-
-	'GPlus.FacebookClientID = "244830352304933"	244830352304933|W9mGMvqs4p9UHlSS9lcKOe-8y1Y
-	'GPlus.FacebookClientSecret = "85632540b1ef326028ae066be23caffa"
 
 	LCAR.VolInc = 250
 	'LoadSettings (False)
